@@ -1,0 +1,15 @@
+node_modules/
+.next/
+.npm-cache/
+test-results/
+playwright-report/
+.temp/
+out/
+*.tsbuildinfo
+.env*
+!.env.example
+.vercel/
+.vscode/
+.DS_Store
+Thumbs.db
+npm-debug.log*
