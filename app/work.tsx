@@ -1,65 +1,21 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   IconArrowUpRight,
-  IconArrowRight,
   IconPlus,
   IconX,
   IconPhoto,
   IconBrandGithub,
+  IconChevronDown,
+  IconBrandGooglePlay,
+  IconPlayerPlay,
 } from "@tabler/icons-react";
 import { useCopy } from "./preferences";
-import { projects, skills, type Project } from "./data";
+import { profile, projects, type Project } from "./data";
 import { Reveal } from "./sections";
 
-export function Skills() {
-  const { t } = useCopy();
-  const categories = ["Frontend", "Backend", "Mobile", "Programming", "Tools"];
-  return (
-    <section
-      id="skill"
-      className="skills section container"
-      aria-labelledby="skill-title"
-    >
-      <Reveal>
-        <span className="eyebrow">{t("KEMAMPUAN", "CAPABILITIES")}</span>
-        <h2 id="skill-title">Skill.</h2>
-        <p className="section-intro">
-          {t(
-            "Teknologi yang saya gunakan dalam pembelajaran dan proyek kampus.",
-            "Technologies I use through learning and university projects.",
-          )}
-        </p>
-      </Reveal>
-      <div className="skill-groups">
-        {categories.map((category, index) => (
-          <Reveal className="skill-group" key={category}>
-            <div className="skill-group-heading">
-              <h3>{category}</h3>
-              <span aria-hidden="true">0{index + 1}</span>
-            </div>
-            <ul>
-              {skills
-                .filter((skill) => skill.category === category)
-                .map((skill) => (
-                  <li key={skill.name}>
-                    <Image
-                      src={`/icons/${skill.icon}.svg`}
-                      width={24}
-                      height={24}
-                      alt=""
-                    />
-                    <span>{skill.name}</span>
-                  </li>
-                ))}
-            </ul>
-          </Reveal>
-        ))}
-      </div>
-    </section>
-  );
-}
 function ProjectImage({
   project,
   large = false,
@@ -99,7 +55,9 @@ function ProjectImage({
 }
 export function Projects() {
   const { t } = useCopy();
-  const [view, setView] = useState<Project | "all" | null>(null);
+  const [view, setView] = useState<Project | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const reduced = useReducedMotion();
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     if (!view) return;
@@ -126,11 +84,16 @@ export function Projects() {
           )}
         </p>
       </Reveal>
-      <div className="project-list">
-        {projects.slice(0, 3).map((project, i) => (
-          <Reveal
+      <div className="project-list" id="additional-projects">
+        <AnimatePresence initial={false}>
+        {projects.slice(0, expanded ? undefined : 3).map((project, i) => (
+          <motion.div
             className={`project-row ${i % 2 ? "reverse" : ""}`}
             key={project.id}
+            initial={i < 3 || reduced ? false : { opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: reduced ? 0 : 0.4 }}
           >
             <article id={`project-${project.id}`}>
               <button
@@ -155,25 +118,42 @@ export function Projects() {
                   className="detail-link"
                   onClick={() => setView(project)}
                 >
-                  More detail
+                  {t("Lihat detail", "More detail")}
                   <IconArrowUpRight size={20} />
                 </button>
               </div>
             </article>
-          </Reveal>
+          </motion.div>
         ))}
+        {expanded && projects.length <= 3 && (
+          <motion.div
+            key="empty-projects"
+            className="projects-empty"
+            initial={reduced ? false : { opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: reduced ? 0 : 0.4 }}
+          >
+            <span className="eyebrow">NEXT UP</span>
+            <p>{t("Proyek lainnya sedang disiapkan.", "More projects are on the way.")}</p>
+            <span>{t("Sementara itu, lihat aktivitas saya di GitHub.", "In the meantime, explore my work on GitHub.")}</span>
+            <a href={profile.github} target="_blank" rel="noreferrer">
+              GitHub <IconArrowUpRight size={17} />
+            </a>
+          </motion.div>
+        )}
+        </AnimatePresence>
       </div>
       <div className="more-projects">
-        <button className="pill glass" onClick={() => setView("all")}>
-          More projects
-          <IconPlus size={19} />
+        <button
+          className="more-projects-toggle"
+          onClick={() => setExpanded((value) => !value)}
+          aria-expanded={expanded}
+          aria-controls="additional-projects"
+        >
+          <IconChevronDown size={22} stroke={1.5} />
+          <span>{expanded ? t("Tampilkan lebih sedikit", "Show less") : t("Lihat lainnya", "See more")}</span>
         </button>
-        <span>
-          {t(
-            "Lihat seluruh koleksi proyek",
-            "Explore the full project collection",
-          )}
-        </span>
       </div>
       <dialog
         ref={dialog}
@@ -193,29 +173,20 @@ export function Projects() {
           >
             <IconX size={23} />
           </button>
-          {view === "all" ? (
-            <>
-              <span className="eyebrow">PROJECT COLLECTION</span>
-              <h2 id="dialog-title">{t("Semua proyek.", "All projects.")}</h2>
-              <div className="project-gallery">
-                {projects.map((p) => (
-                  <button key={p.id} onClick={() => setView(p)}>
-                    <ProjectImage project={p} />
-                    <span>
-                      {t(p.title, p.titleEn)}
-                      <IconArrowUpRight size={19} />
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : view ? (
+          {view && (
             <>
               <span className="eyebrow">
                 {t(view.category, view.categoryEn)}
               </span>
               <h2 id="dialog-title">{t(view.title, view.titleEn)}</h2>
               <ProjectImage project={view} large />
+              {!!view.images?.length && (
+                <div className="project-detail-gallery">
+                  {view.images.map((src, index) => (
+                    <Image key={src} src={src} width={600} height={360} alt={`${t(view.title, view.titleEn)} — ${index + 1}`} />
+                  ))}
+                </div>
+              )}
               <div className="detail-body">
                 <h3>{t("Tentang proyek", "About the project")}</h3>
                 <p>{t(view.description, view.descriptionEn)}</p>
@@ -255,14 +226,20 @@ export function Projects() {
                       <IconArrowUpRight size={18} />
                     </a>
                   )}
-                  <button className="text-link" onClick={() => setView("all")}>
-                    {t("Semua proyek", "All projects")}
-                    <IconArrowRight size={18} />
-                  </button>
+                  {view.video && (
+                    <a className="pill glass" href={view.video} target="_blank" rel="noreferrer">
+                      <IconPlayerPlay size={18} /> {t("Video", "Video")}
+                    </a>
+                  )}
+                  {view.playStore && (
+                    <a className="pill glass" href={view.playStore} target="_blank" rel="noreferrer">
+                      <IconBrandGooglePlay size={18} /> Google Play
+                    </a>
+                  )}
                 </div>
               </div>
             </>
-          ) : null}
+          )}
         </div>
       </dialog>
     </section>

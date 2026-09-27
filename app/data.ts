@@ -18,6 +18,9 @@ export type Project = {
   descriptionEn: string;
   repository: string;
   demo: string;
+  images?: string[];
+  video?: string;
+  playStore?: string;
   placeholder: boolean;
 };
 // Replace these entries with real project content. Add entries here; both views update automatically.
@@ -151,4 +154,12 @@ export const skills = [
     icon: "androidstudio",
     category: "Tools",
   },
+  { name: "Figma", icon: "", category: "Tools" },
+  { name: "MySQL", icon: "", category: "Data & Deploy" },
+  { name: "PostgreSQL", icon: "", category: "Data & Deploy" },
+  { name: "Supabase", icon: "", category: "Data & Deploy" },
+  { name: "Railway", icon: "", category: "Data & Deploy" },
+  { name: "Codex", icon: "", category: "AI Workflow" },
+  { name: "Kiro", icon: "", category: "AI Workflow" },
+  { name: "Claude Code", icon: "", category: "AI Workflow" },
 ];

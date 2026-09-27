@@ -46,12 +46,6 @@
     inset 0 -1px 2px rgba(255, 255, 255, 0.09),
     0 14px 32px -10px rgba(0, 4, 9, 0.4);
 }
-.glass-filter {
-  position: absolute;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
 .nav-wrap:before {
   content: "";
   position: absolute;
@@ -65,6 +59,8 @@
   z-index: -1;
 }
 .navbar {
+  position: relative;
+  isolation: isolate;
   height: 72px;
   max-width: 1180px;
   overflow: hidden;
@@ -76,13 +72,26 @@
   height: 64px;
   max-width: 1080px;
 }
-.glass-glint {
+.glass-surface.glass-layer {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+}
+.navbar > .glass-layer {
   z-index: -1;
-  opacity: 0.5;
+}
+.glass-action {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.glass-action > .glass-layer {
+  z-index: -1;
 }
 .navbar .wordmark {
   font-size: 24px;
@@ -137,11 +146,6 @@
 .icon-button:hover {
   transform: scale(1.04);
 }
-@supports (backdrop-filter: url(#glass-refraction)) {
-  .navbar {
-    backdrop-filter: blur(14px) saturate(110%) url(#glass-refraction);
-  }
-}
 .hero-topline .eyebrow {
   font-size: 11px;
 }
@@ -171,9 +175,6 @@
 .footer > p,
 .form-bottom > span {
   font-size: 11px;
-}
-.hero-intro .pill {
-  background-color: var(--glass);
 }
 /* Real suspended card. The canvas is isolated from Motion's DOM transforms. */
 .lanyard-area {
@@ -305,7 +306,10 @@
     padding: 12px;
     border-radius: 22px;
     top: 73px;
-    background: var(--bg);
+    background: color-mix(in srgb, var(--bg) 84%, transparent);
+    backdrop-filter: blur(16px) saturate(130%);
+    -webkit-backdrop-filter: blur(16px) saturate(130%);
+    border-color: var(--glass-rim);
   }
   .nav-links a {
     padding: 14px 17px;
@@ -358,9 +362,6 @@
   .nav-wrap:before {
     backdrop-filter: none;
   }
-  .glass-glint {
-    display: none;
-  }
   .lanyard-stage {
     cursor: default;
   }
@@ -371,7 +372,8 @@
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
   .glass,
   [data-theme="dark"] .glass,
-  .navbar {
+  .navbar,
+  .nav-links {
     background: var(--bg);
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
@@ -379,7 +381,6 @@
     box-shadow: none;
   }
   .nav-wrap:before,
-  .glass-glint,
   .glass:after {
     display: none;
   }
@@ -393,86 +394,7 @@
   }
 }
 
-.skills {
-  border-top: 1px solid var(--line);
-}
-.skill-groups {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 48px;
-}
-.skill-group {
-  grid-column: span 2;
-  padding: 28px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: var(--surface);
-}
-.skill-group:nth-child(-n + 2) {
-  grid-column: span 3;
-}
-.skill-group-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 28px;
-}
-.skill-group h3 {
-  font-size: 23px;
-  letter-spacing: -0.04em;
-}
-.skill-group-heading > span {
-  font:
-    11px var(--font-mono),
-    monospace;
-  color: var(--muted);
-}
-.skill-group ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 22px;
-}
-.skill-group li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 36px;
-  font-size: 14px;
-}
-.skill-group img {
-  object-fit: contain;
-  filter: saturate(0.6);
-}
-[data-theme="dark"] .skill-group img[src$="nextjs.svg"],
-[data-theme="dark"] .skill-group img[src$="express.svg"] {
-  filter: invert(1);
-}
 .contact {
   min-height: 100svh;
   align-items: start;
-}
-@media (max-width: 1023px) {
-  .skill-group {
-    padding: 22px;
-    grid-column: span 3;
-  }
-}
-@media (max-width: 767px) {
-  .skill-groups {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    margin-top: 32px;
-  }
-  .skill-group,
-  .skill-group:nth-child(-n + 2) {
-    grid-column: auto;
-  }
-  .skill-group-heading {
-    margin-bottom: 20px;
-  }
 }

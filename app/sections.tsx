@@ -5,9 +5,8 @@ import dynamic from "next/dynamic";
 import {
   motion,
   useReducedMotion,
-  useMotionValue,
-  useMotionTemplate,
 } from "motion/react";
+import GlassSurface from "./glass-surface";
 import {
   IconPlayerPause,
   IconPlayerPlay,
@@ -59,8 +58,6 @@ export function Header() {
   const [active, setActive] = useState("home");
   const [scrolled, setScrolled] = useState(false);
   const reduced = useReducedMotion();
-  const glintX = useMotionValue("22%");
-  const glint = useMotionTemplate`radial-gradient(ellipse at ${glintX} 0%, rgba(255,255,255,.46), transparent 48%)`;
   useEffect(() => {
     setTheme(document.documentElement.dataset.theme || "light");
     const system = matchMedia("(prefers-color-scheme: dark)");
@@ -125,47 +122,11 @@ export function Header() {
   }
   return (
     <header className={`nav-wrap ${scrolled ? "is-scrolled" : ""}`}>
-      <svg className="glass-filter" aria-hidden="true">
-        <defs>
-          <filter
-            id="glass-refraction"
-            x="0%"
-            y="0%"
-            width="100%"
-            height="100%"
-            colorInterpolationFilters="sRGB"
-          >
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency=".012 .008"
-              numOctaves="1"
-              seed="8"
-              result="noise"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale="6"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-      </svg>
       <motion.nav
-        className="navbar glass"
+        className="navbar"
         aria-label="Main navigation"
-        onPointerMove={(e) => {
-          if (reduced) return;
-          const r = e.currentTarget.getBoundingClientRect();
-          glintX.set(`${((e.clientX - r.left) / r.width) * 100}%`);
-        }}
       >
-        <motion.span
-          className="glass-glint"
-          style={{ background: glint }}
-          aria-hidden="true"
-        />
+        <GlassSurface className="glass-layer" width="100%" height="100%" borderRadius={999} backgroundOpacity={0.55} saturation={1.15} distortionScale={-28} greenOffset={2} blueOffset={4} />
         <a
           href="#home"
           className="wordmark"
@@ -193,7 +154,7 @@ export function Header() {
           {[
             ["home", "Home"],
             ["about", "About"],
-            ["skill", "Skill"],
+            ["skill", "Technology"],
             ["projects", "Projects"],
             ["contact", "Contact"],
           ].map(([id, name]) => (
@@ -267,7 +228,7 @@ export function Hero() {
         Asarya Jachred Alotia, Software Engineer
       </h1>
       <div className="hero-topline container">
-        <span className="eyebrow">SOFTWARE ENGINEERING PORTFOLIO</span>
+        <span className="eyebrow"></span>
         <span className="availability">
           <i />
           Open to work
@@ -296,8 +257,9 @@ export function Hero() {
             Engineer<span className="accent-period">.</span>
           </p>
           <span>Computer Science, BINUS University</span>
-          <a className="pill glass" href="#projects">
-            {t("Lihat proyek", "View projects")}
+          <a className="pill glass-action" href="#projects">
+            <GlassSurface className="glass-layer" width="100%" height="100%" borderRadius={999} backgroundOpacity={0.38} distortionScale={-18} greenOffset={2} blueOffset={4} />
+            <span>{t("Lihat proyek", "View projects")}</span>
             <IconArrowUpRight size={19} />
           </a>
         </div>

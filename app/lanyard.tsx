@@ -41,8 +41,10 @@ import { useCopy } from "./preferences";
 import {
   anchorHeight,
   ropeLength,
+  cardAnchorOffset,
   dropPositions,
   canResetLanyard,
+  clampDragPoint,
 } from "./lanyard-motion";
 
 extend({ MeshLineGeometry, MeshLineMaterial });
@@ -161,7 +163,7 @@ export default function Lanyard() {
               <ambientLight intensity={0.7} />
               <Suspense fallback={null}>
                 <Physics
-                  gravity={[0, -20, 0]}
+                  gravity={[0, -16, 0]}
                   timeStep={1 / 60}
                   interpolate
                   numSolverIterations={12}
@@ -250,11 +252,11 @@ function Band({
     j3 = useRef<Body>(null!),
     card = useRef<Body>(null!);
   const band = useRef<THREE.Mesh<MeshLineGeometry, MeshLineMaterial>>(null!);
-  const pointerBody = useRef<Body>(null!);
   const dragDepth = useRef(0);
   const freeSpinUntil = useRef(0);
-  const { world, rapier } = useRapier();
+  const { rapier } = useRapier();
   const [dragged, setDragged] = useState<THREE.Vector3 | null>(null);
+  const [returning, setReturning] = useState(false);
   const { nodes, materials } = useGLTF("/lanyard/card.glb") as unknown as {
     nodes: Record<string, THREE.Mesh>;
     materials: {
@@ -310,7 +312,9 @@ function Band({
     () => ({
       point: new THREE.Vector3(),
       direction: new THREE.Vector3(),
-      rotation: new THREE.Quaternion(),
+      attachment: new THREE.Vector3(),
+      returnPoint: new THREE.Vector3(),
+      returnTarget: new THREE.Vector3(0, -0.5, 0),
       p1: new THREE.Vector3(...dropPositions[0]),
       p2: new THREE.Vector3(...dropPositions[1]),
       curve: new THREE.CatmullRomCurve3(
@@ -322,38 +326,24 @@ function Band({
   const bodyProps = {
     colliders: false as const,
     canSleep: true,
-    angularDamping: 0.7,
-    linearDamping: 0.9,
+    angularDamping: 1.15,
+    linearDamping: 1.15,
   };
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], ropeLength]);
   useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], ropeLength]);
   useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], ropeLength]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
-    [0, 1.45, 0],
+    [0, cardAnchorOffset, 0],
   ]);
-  useEffect(() => {
-    if (!dragged) return;
-    // Grab the hit point, leaving all rotational degrees of freedom available.
-    const joint = world.createImpulseJoint(
-      rapier.JointData.spherical({ x: 0, y: 0, z: 0 }, dragged),
-      pointerBody.current,
-      card.current,
-      true,
-    );
-    return () => {
-      if (world.getImpulseJoint(joint.handle))
-        world.removeImpulseJoint(joint, true);
-    };
-  }, [dragged, rapier, world]);
   useEffect(() => {
     onReady();
   }, []); // The scene owns one ready notification per mount.
   useEffect(() => {
     if (impulse && card.current) {
-      card.current.applyImpulse({ x: 2.6, y: 1.2, z: 0.5 }, true);
-      card.current.applyTorqueImpulse({ x: 0.15, y: 1.2, z: 0.3 }, true);
-      freeSpinUntil.current = performance.now() + 2500;
+      card.current.applyImpulse({ x: 1.5, y: 0.7, z: 0.3 }, true);
+      card.current.applyTorqueImpulse({ x: 0.08, y: 0.55, z: 0.15 }, true);
+      freeSpinUntil.current = performance.now() + 1500;
     }
   }, [impulse]);
   useEffect(() => {
@@ -361,12 +351,29 @@ function Band({
     freeSpinUntil.current = 0;
   }, [flipped]);
   strap.wrapS = strap.wrapT = THREE.RepeatWrapping;
+  function endDrag() {
+    freeSpinUntil.current = performance.now() + 1500;
+    setDragged(null);
+    const position = card.current.translation();
+    setReturning(
+      Math.hypot(position.x, position.y - anchorHeight, position.z) >
+        ropeLength * 3 + cardAnchorOffset + 0.1,
+    );
+  }
+  useEffect(() => {
+    if (!dragged) return;
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+    return () => {
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+    };
+  }, [dragged]);
   function release(e: ThreeEvent<PointerEvent>) {
     const target = e.target as Element;
     if (target.hasPointerCapture?.(e.pointerId))
       target.releasePointerCapture(e.pointerId);
-    freeSpinUntil.current = performance.now() + 2500;
-    setDragged(null);
+    endDrag();
   }
   useFrame((state, dt) => {
     if (!card.current || !band.current) return;
@@ -381,20 +388,49 @@ function Band({
           (dragDepth.current - math.point.z) / math.direction.z,
         ),
       );
-      math.point.x = THREE.MathUtils.clamp(math.point.x, -3.4, 3.4);
-      math.point.y = THREE.MathUtils.clamp(math.point.y, -2, 3.7);
+      math.point.sub(dragged);
+      math.point.set(...clampDragPoint(math.point.x, math.point.y, math.point.z));
       [card, j1, j2, j3].forEach((r) => r.current.wakeUp());
-      pointerBody.current.setNextKinematicTranslation(math.point);
+      if (
+        Number.isFinite(math.point.x) &&
+        Number.isFinite(math.point.y) &&
+        Number.isFinite(math.point.z)
+      ) card.current.setNextKinematicTranslation(math.point);
+    } else if (returning) {
+      math.returnPoint.copy(card.current.translation());
+      math.returnPoint.lerp(math.returnTarget, 1 - Math.exp(-delta * 7));
+      card.current.setNextKinematicTranslation(math.returnPoint);
+      if (math.returnPoint.distanceToSquared(math.returnTarget) < 0.01) {
+        // Restore unstretched joints before handing the card back to physics.
+        [j1, j2, j3, card].forEach((body, index) => {
+          body.current.setTranslation(
+            { x: 0, y: [3.3, 2.1, 0.9, -0.55][index], z: 0 },
+            true,
+          );
+          body.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
+          body.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
+        });
+        card.current.setRotation(
+          { x: 0, y: flipped ? 1 : 0, z: 0, w: flipped ? 0 : 1 },
+          true,
+        );
+        card.current.setBodyType(rapier.RigidBodyType.Dynamic, true);
+        setReturning(false);
+      }
     }
-    math.p1.lerp(j1.current.translation(), 1 - Math.exp(-delta * 24));
-    math.p2.lerp(j2.current.translation(), 1 - Math.exp(-delta * 24));
-    math.curve.points[0].copy(j3.current.translation());
+    math.p1.lerp(j1.current.translation(), 1 - Math.exp(-delta * 18));
+    math.p2.lerp(j2.current.translation(), 1 - Math.exp(-delta * 18));
+    math.attachment
+      .set(0, cardAnchorOffset, 0)
+      .applyQuaternion(card.current.rotation())
+      .add(card.current.translation());
+    math.curve.points[0].copy(math.attachment);
     math.curve.points[1].copy(math.p2);
     math.curve.points[2].copy(math.p1);
     math.curve.points[3].copy(fixed.current.translation());
     math.curve.curveType = "chordal";
     band.current.geometry.setPoints(math.curve.getPoints(32));
-    if (!dragged && performance.now() > freeSpinUntil.current) {
+    if (!dragged && !returning && performance.now() > freeSpinUntil.current) {
       const q = card.current.rotation(),
         velocity = card.current.angvel();
       const yaw = Math.atan2(
@@ -412,7 +448,6 @@ function Band({
   });
   return (
     <>
-      <RigidBody ref={pointerBody} type="kinematicPosition" colliders={false} />
       <group>
         <RigidBody
           ref={fixed}
@@ -433,7 +468,7 @@ function Band({
           ref={card}
           position={dropPositions[3]}
           {...bodyProps}
-          type="dynamic"
+          type={dragged || returning ? "kinematicPosition" : "dynamic"}
           ccd
         >
           <CuboidCollider args={[0.8, 1.125, 0.04]} />
@@ -444,14 +479,11 @@ function Band({
               e.stopPropagation();
               (e.target as Element).setPointerCapture(e.pointerId);
               dragDepth.current = e.point.z;
-              pointerBody.current.setTranslation(e.point, true);
-              pointerBody.current.setNextKinematicTranslation(e.point);
-              math.rotation.copy(card.current.rotation()).invert();
+              setReturning(false);
               setDragged(
                 new THREE.Vector3()
                   .copy(e.point)
-                  .sub(card.current.translation())
-                  .applyQuaternion(math.rotation),
+                  .sub(card.current.translation()),
               );
             }}
             onPointerUp={release}

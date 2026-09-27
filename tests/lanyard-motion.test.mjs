@@ -2,8 +2,10 @@ import assert from "node:assert/strict";
 import {
   anchorHeight,
   ropeLength,
+  cardAnchorOffset,
   dropPositions,
   canResetLanyard,
+  clampDragPoint,
 } from "../app/lanyard-motion.ts";
 
 // Half-visible Home and a still-visible card must never trigger a teleport.
@@ -25,5 +27,10 @@ for (const position of dropPositions.slice(0, 3)) {
   );
   previous = position;
 }
-assert.equal(dropPositions[2][1] - dropPositions[3][1], 1.4500000000000002);
+assert.ok(Math.abs(dropPositions[2][1] - dropPositions[3][1] - cardAnchorOffset) < 1e-9);
+assert.deepEqual(clampDragPoint(1, 2, 0), [1, 2, 0]);
+assert.ok(Math.abs(clampDragPoint(0, -0.6, 0)[1] + 0.6) < 1e-9);
+assert.ok(clampDragPoint(0, -5, 0)[1] < -cameraTop - 1.3, "card can leave the canvas completely");
+const drag = clampDragPoint(100, -100, 100);
+assert.deepEqual(drag, [4, -5.5, 2]);
 console.log("Lanyard reset visibility and drop geometry passed.");

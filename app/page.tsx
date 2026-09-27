@@ -1,5 +1,6 @@
 import { Header, Hero, About, Contact, Footer } from "./sections";
-import { Skills, Projects } from "./work";
+import { Projects } from "./work";
+import Technology from "./technology";
 export default function Page() {
   return (
     <>
@@ -10,7 +11,7 @@ export default function Page() {
       <main>
         <Hero />
         <About />
-        <Skills />
+        <Technology />
         <Projects />
         <Contact />
       </main>
