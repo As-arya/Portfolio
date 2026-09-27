@@ -9,7 +9,8 @@ import {
   useMotionTemplate,
 } from "motion/react";
 import {
-  IconArrowDown,
+  IconPlayerPause,
+  IconPlayerPlay,
   IconArrowUpRight,
   IconArrowUp,
   IconBrandGithub,
@@ -23,6 +24,7 @@ import {
 } from "@tabler/icons-react";
 import { useCopy } from "./preferences";
 import { profile } from "./data";
+import { activeSection } from "./navigation";
 const Lanyard = dynamic(() => import("./lanyard"), {
   ssr: false,
   loading: () => (
@@ -55,6 +57,7 @@ export function Header() {
   const [theme, setTheme] = useState("light");
   const [menu, setMenu] = useState(false);
   const [active, setActive] = useState("home");
+  const [scrolled, setScrolled] = useState(false);
   const reduced = useReducedMotion();
   const glintX = useMotionValue("22%");
   const glint = useMotionTemplate`radial-gradient(ellipse at ${glintX} 0%, rgba(255,255,255,.46), transparent 48%)`;
@@ -70,17 +73,45 @@ export function Header() {
       document.documentElement.dataset.theme = v;
     };
     system.addEventListener("change", update);
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) if (e.isIntersecting) setActive(e.target.id);
-      },
-      { rootMargin: "-20% 0px -55% 0px" },
-    );
-    document
-      .querySelectorAll("main > section")
-      .forEach((s) => observer.observe(s));
+    const sections = [
+      ...document.querySelectorAll<HTMLElement>("main > section"),
+    ];
+    let frame = 0;
+    const track = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        setScrolled(window.scrollY > 48);
+        const navBottom =
+          document.querySelector(".navbar")?.getBoundingClientRect().bottom ??
+          89;
+        setActive(
+          activeSection(
+            sections.map((section) => ({
+              id: section.id,
+              top:
+                section.getBoundingClientRect().top +
+                parseFloat(getComputedStyle(section).paddingTop),
+            })),
+            navBottom + 48,
+          ),
+        );
+      });
+    };
+    // Preserve links shared before Tech Stack was renamed.
+    if (location.hash === "#tech-stack") {
+      history.replaceState(null, "", "#skill");
+      document.getElementById("skill")?.scrollIntoView({ behavior: "instant" });
+    }
+    track();
+    window.addEventListener("scroll", track, { passive: true });
+    window.addEventListener("resize", track);
+    const observer = new ResizeObserver(track);
+    sections.forEach((section) => observer.observe(section));
     return () => {
       observer.disconnect();
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", track);
+      window.removeEventListener("resize", track);
       system.removeEventListener("change", update);
     };
   }, []);
@@ -93,7 +124,7 @@ export function Header() {
     } catch {}
   }
   return (
-    <header className={`nav-wrap ${active !== "home" ? "is-scrolled" : ""}`}>
+    <header className={`nav-wrap ${scrolled ? "is-scrolled" : ""}`}>
       <svg className="glass-filter" aria-hidden="true">
         <defs>
           <filter
@@ -135,14 +166,34 @@ export function Header() {
           style={{ background: glint }}
           aria-hidden="true"
         />
-        <a href="#home" className="wordmark" onClick={() => setMenu(false)}>
-          asarya<span>.</span>
+        <a
+          href="#home"
+          className="wordmark"
+          aria-label="Asarya — Home"
+          onClick={() => setMenu(false)}
+        >
+          <span aria-hidden="true">A</span>
+          <motion.span
+            className="wordmark-rest"
+            aria-hidden="true"
+            initial={false}
+            animate={{
+              width: scrolled ? 0 : "auto",
+              opacity: scrolled ? 0 : 1,
+            }}
+            transition={{
+              duration: reduced ? 0 : 0.45,
+              ease: [0.2, 0.7, 0.2, 1],
+            }}
+          >
+            sarya
+          </motion.span>
         </a>
         <div className={`nav-links ${menu ? "is-open" : ""}`} id="navigation">
           {[
             ["home", "Home"],
             ["about", "About"],
-            ["tech-stack", "Tech Stack"],
+            ["skill", "Skill"],
             ["projects", "Projects"],
             ["contact", "Contact"],
           ].map(([id, name]) => (
@@ -250,25 +301,18 @@ export function Hero() {
             <IconArrowUpRight size={19} />
           </a>
         </div>
-        <div className="hero-side">
-          <p>{t("Website & aplikasi.", "Websites & applications.")}</p>
-          <a
-            href="#about"
-            className="round-link glass"
-            aria-label={t("Tentang Asarya", "About Asarya")}
-          >
-            <IconArrowDown size={21} />
-          </a>
-        </div>
       </div>
       <button
         className="motion-control"
         onClick={() => setPaused(!paused)}
         aria-pressed={paused}
+        aria-label={
+          paused
+            ? t("Lanjutkan animasi", "Resume animation")
+            : t("Jeda animasi", "Pause animation")
+        }
       >
-        {paused
-          ? t("Lanjutkan animasi", "Resume animation")
-          : t("Jeda animasi", "Pause animation")}
+        {paused ? <IconPlayerPlay size={16} /> : <IconPlayerPause size={16} />}
       </button>
     </section>
   );
@@ -452,7 +496,7 @@ export function Footer() {
   return (
     <footer className="footer container">
       <a className="wordmark" href="#home">
-        asarya<span>.</span>
+        Asarya
       </a>
       <p>© {new Date().getFullYear()} Asarya Jachred Alotia</p>
       <a href="#home" className="text-link">

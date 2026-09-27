@@ -1,6 +1,6 @@
 # Portfolio — Asarya Jachred Alotia
 
-Portofolio frontend untuk Asarya Jachred Alotia, mahasiswa Computer Science BINUS University dengan peminatan Software Engineering. Situs berisi Home, About, Tech Stack, Projects, dan Contact, dengan pilihan tema terang/gelap serta bahasa Indonesia/Inggris.
+Portofolio frontend untuk Asarya Jachred Alotia, mahasiswa Computer Science BINUS University dengan peminatan Software Engineering. Situs berisi Home, About, Skill, Projects, dan Contact, dengan pilihan tema terang/gelap serta bahasa Indonesia/Inggris.
 
 ## Menjalankan secara lokal
 
@@ -17,6 +17,8 @@ Buka [http://localhost:3000](http://localhost:3000). Untuk memeriksa sebelum pub
 npm run check
 npm run build
 ```
+
+Cek regresi penentuan section navbar dengan `node tests/navigation.test.mjs` (Node.js 22.18+).
 
 `npm run start` menjalankan hasil build pada port 3000. Jika port itu dipakai, hentikan proses lain atau jalankan `npm run start -- -p 3001`.
 

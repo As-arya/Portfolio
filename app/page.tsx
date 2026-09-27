@@ -1,5 +1,5 @@
 import { Header, Hero, About, Contact, Footer } from "./sections";
-import { TechStack, Projects } from "./work";
+import { Skills, Projects } from "./work";
 export default function Page() {
   return (
     <>
@@ -10,7 +10,7 @@ export default function Page() {
       <main>
         <Hero />
         <About />
-        <TechStack />
+        <Skills />
         <Projects />
         <Contact />
       </main>

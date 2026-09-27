@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   IconArrowUpRight,
@@ -7,156 +7,55 @@ import {
   IconPlus,
   IconX,
   IconPhoto,
-  IconFolder,
   IconBrandGithub,
-  IconBrandTypescript,
-  IconBrandPython,
-  IconBrandFlutter,
-  IconBrandHtml5,
-  IconBrandCss3,
-  IconBrandKotlin,
-  IconBrandGit,
-  IconBrandNextjs,
-  IconBrandNodejs,
-  IconBrandAndroid,
 } from "@tabler/icons-react";
 import { useCopy } from "./preferences";
 import { projects, skills, type Project } from "./data";
 import { Reveal } from "./sections";
 
-const keyIcons = {
-  typescript: IconBrandTypescript,
-  python: IconBrandPython,
-  flutter: IconBrandFlutter,
-  html5: IconBrandHtml5,
-  css3: IconBrandCss3,
-  kotlin: IconBrandKotlin,
-  git: IconBrandGit,
-  nextjs: IconBrandNextjs,
-  nodejs: IconBrandNodejs,
-  androidstudio: IconBrandAndroid,
-};
-function KeyIcon({ icon }: { icon: string }) {
-  const Icon = keyIcons[icon as keyof typeof keyIcons];
-  return Icon ? (
-    <Icon size={35} stroke={1.8} />
-  ) : icon === "c" ? (
-    <b className="key-symbol">C</b>
-  ) : (
-    <Image
-      src={`/icons/${icon}.svg`}
-      alt=""
-      width={35}
-      height={35}
-      className={icon === "dart" ? "original-logo" : ""}
-    />
-  );
-}
-
-export function TechStack() {
+export function Skills() {
   const { t } = useCopy();
-  const [selected, setSelected] = useState(2);
-  const skill = skills[selected];
-  const related = projects.filter((p) => p.stack.includes(skill.name));
+  const categories = ["Frontend", "Backend", "Mobile", "Programming", "Tools"];
   return (
-    <section id="tech-stack" className="tech section container">
+    <section
+      id="skill"
+      className="skills section container"
+      aria-labelledby="skill-title"
+    >
       <Reveal>
-        <span className="eyebrow">TECH STACK</span>
-        <h2>Tech Stack.</h2>
+        <span className="eyebrow">{t("KEMAMPUAN", "CAPABILITIES")}</span>
+        <h2 id="skill-title">Skill.</h2>
         <p className="section-intro">
           {t(
-            "Pilih satu tombol untuk melihat lebih dekat.",
-            "Pick a key to take a closer look.",
+            "Teknologi yang saya gunakan dalam pembelajaran dan proyek kampus.",
+            "Technologies I use through learning and university projects.",
           )}
         </p>
       </Reveal>
-      <div className="tech-layout">
-        <div
-          className="keyboard"
-          role="group"
-          aria-label={t("Pilih teknologi", "Choose a technology")}
-        >
-          <div className="keys">
-            {skills.map((item, i) => (
-              <button
-                key={item.name}
-                className={`key ${i === selected ? "selected" : ""}`}
-                style={{ "--key-color": item.color } as CSSProperties}
-                onClick={() => setSelected(i)}
-                aria-label={item.name}
-                aria-pressed={i === selected}
-                aria-controls="skill-detail"
-              >
-                <span className="key-shoulder" aria-hidden="true" />
-                <span className="key-face">
-                  <KeyIcon icon={item.icon} />
-                </span>
-                <span className="key-label">{item.name}</span>
-              </button>
-            ))}
-            <div className="key decorative-key" aria-hidden="true">
-              <span className="key-face">
-                <IconArrowRight size={32} />
-                <span>Keep exploring</span>
-              </span>
+      <div className="skill-groups">
+        {categories.map((category, index) => (
+          <Reveal className="skill-group" key={category}>
+            <div className="skill-group-heading">
+              <h3>{category}</h3>
+              <span aria-hidden="true">0{index + 1}</span>
             </div>
-          </div>
-          <div className="keyboard-bottom">
-            <span>{t("Pilih teknologi", "Choose a technology")}</span>
-            <span>14 KEYS</span>
-          </div>
-        </div>
-        <div
-          className="skill-detail"
-          id="skill-detail"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          <div className="skill-heading">
-            <span className="skill-category">{skill.category}</span>
-            <Image
-              src={`/icons/${skill.icon}.svg`}
-              alt=""
-              width={60}
-              height={60}
-            />
-          </div>
-          <h3>
-            {skill.name}
-            <span className="accent-period">.</span>
-          </h3>
-          <span className="eyebrow">
-            {t("AREA PEMAHAMAN", "AREAS OF UNDERSTANDING")}
-          </span>
-          <p className="skill-description">{t(skill.focus, skill.focusEn)}</p>
-          <div className="related-projects">
-            <span className="eyebrow">{t("DIGUNAKAN DI", "USED IN")}</span>
-            {related.length ? (
-              related.map((p) => (
-                <a href={`#project-${p.id}`} key={p.id}>
-                  <span>
-                    <IconFolder size={19} />
-                    {t(p.title, p.titleEn)}
-                  </span>
-                  <IconArrowUpRight size={19} />
-                </a>
-              ))
-            ) : (
-              <p>
-                {t(
-                  "Detail proyek yang menggunakan teknologi ini belum ditambahkan.",
-                  "Project details for this technology have not been added yet.",
-                )}
-              </p>
-            )}
-          </div>
-          <p className="skill-footnote">
-            {t(
-              "Pengalaman melalui pembelajaran dan proyek kampus.",
-              "Experience through learning and university projects.",
-            )}
-          </p>
-        </div>
+            <ul>
+              {skills
+                .filter((skill) => skill.category === category)
+                .map((skill) => (
+                  <li key={skill.name}>
+                    <Image
+                      src={`/icons/${skill.icon}.svg`}
+                      width={24}
+                      height={24}
+                      alt=""
+                    />
+                    <span>{skill.name}</span>
+                  </li>
+                ))}
+            </ul>
+          </Reveal>
+        ))}
       </div>
     </section>
   );
