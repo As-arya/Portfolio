@@ -244,8 +244,8 @@ export default function PixelBlast() {
       uniforms.uClickTimes.value[click] = uniforms.uTime.value;
       click = (click + 1) % 10;
     };
-    const section = host.closest<HTMLElement>(".technology-activity");
-    section?.addEventListener("pointerdown", onPointerDown);
+    const region = host.closest<HTMLElement>(".technology-activity, .contact, .project-dialog");
+    region?.addEventListener("pointerdown", onPointerDown);
     let frame = 0;
     let last = 0;
     const start = performance.now();
@@ -259,7 +259,7 @@ export default function PixelBlast() {
     frame = requestAnimationFrame(render);
     return () => {
       cancelAnimationFrame(frame);
-      section?.removeEventListener("pointerdown", onPointerDown);
+      region?.removeEventListener("pointerdown", onPointerDown);
       visibilityObserver.disconnect();
       resizeObserver.disconnect();
       themeObserver.disconnect();

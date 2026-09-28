@@ -1,36 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import {
-  IconBrandFigma,
-  IconBrandMysql,
-  IconBrandOpenai,
-  IconBrandSupabase,
-  IconCodeAi,
-  IconDatabase,
-  IconTrain,
-} from "@tabler/icons-react";
 import CountUp from "./count-up";
+import DecryptedText from "./decrypted-text";
 import { skills, profile } from "./data";
 import GlassSurface from "./glass-surface";
 import LogoLoop from "./logo-loop";
+import type { Contribution } from "./github-contributions";
 import { useCopy } from "./preferences";
 import { Reveal } from "./sections";
 import "./technology.css";
 
 const PixelBlast = dynamic(() => import("./pixel-blast"), { ssr: false });
-
-const extraIcons: Record<string, ReactNode> = {
-  Figma: <IconBrandFigma />,
-  MySQL: <IconBrandMysql />,
-  PostgreSQL: <IconDatabase />,
-  Supabase: <IconBrandSupabase />,
-  Railway: <IconTrain />,
-  Codex: <IconBrandOpenai />,
-  Kiro: <b>K</b>,
-  "Claude Code": <IconCodeAi />,
-};
 
 const logoRows = [
   skills.filter((skill) => ["Frontend", "Backend"].includes(skill.category) || skill.name === "Figma"),
@@ -38,37 +20,32 @@ const logoRows = [
   skills.filter((skill) => ["Data & Deploy", "Tools", "AI Workflow"].includes(skill.category) && skill.name !== "Figma"),
 ].map((row) => row.map((skill) => ({
   name: skill.name,
-  src: skill.icon ? `/icons/${skill.icon}.svg` : undefined,
-  icon: extraIcons[skill.name],
+  src: `/icons/${skill.icon}.${skill.name === "Claude Code" ? "png" : "svg"}`,
+  url: skill.url,
 })));
 
-type Contribution = { date: string; count: number; level: number };
 type Activity = { days: Contribution[]; total: number; activeDays: number; longestStreak: number };
 
 function GitHubActivity() {
   const { t } = useCopy();
+  const username = new URL(profile.github).pathname.slice(1);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [failed, setFailed] = useState(false);
+  const drag = useRef<{ x: number; scrollLeft: number } | null>(null);
+  const showLatest = useCallback((element: HTMLDivElement | null) => {
+    if (element) element.scrollLeft = element.scrollWidth - element.clientWidth;
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
-    const username = new URL(profile.github).pathname.slice(1);
-    fetch(`https://github-contributions-api.jogruber.de/v4/${encodeURIComponent(username)}?y=last`, {
-      signal: controller.signal,
-    })
+    fetch("/api/github-contributions", { signal: controller.signal })
       .then((response) => {
         if (!response.ok) throw new Error("GitHub activity unavailable");
         return response.json();
       })
       .then((data) => {
-        if (!Array.isArray(data.contributions)) throw new Error("Invalid GitHub activity");
-        const days: Contribution[] = data.contributions.filter(
-          (day: Contribution) =>
-            /^\d{4}-\d{2}-\d{2}$/.test(day?.date) &&
-            Number.isInteger(day.count) && day.count >= 0 &&
-            Number.isInteger(day.level) && day.level >= 0 && day.level <= 4,
-        );
-        if (!days.length) throw new Error("Empty GitHub activity");
+        if (!Array.isArray(data.days) || data.days.length < 300) throw new Error("Invalid GitHub activity");
+        const days: Contribution[] = data.days.slice(-365);
         let activeDays = 0;
         let streak = 0;
         let longestStreak = 0;
@@ -85,9 +62,7 @@ function GitHubActivity() {
           days,
           activeDays,
           longestStreak,
-          total: Number.isInteger(data.total?.lastYear)
-            ? data.total.lastYear
-            : days.reduce((sum, day) => sum + day.count, 0),
+          total: days.reduce((sum, day) => sum + day.count, 0),
         });
       })
       .catch(() => {
@@ -123,9 +98,9 @@ function GitHubActivity() {
         <div className="github-activity-heading">
           <div>
             <span className="eyebrow">{t("AKTIVITAS KODE", "CODING ACTIVITY")}</span>
-            <h3>GitHub contributions<span className="accent-period">.</span></h3>
+            <h3>GitHub Activity<span className="accent-period">.</span></h3>
           </div>
-          <p>{t("Jejak kontribusi publik dalam satu tahun terakhir.", "A year of public coding activity.")}</p>
+          <p>{t("Grafik kontribusi langsung dari GitHub.", "Contribution graph directly from GitHub.")}</p>
         </div>
         {activity ? (
           <div className="activity-dashboard">
@@ -149,7 +124,24 @@ function GitHubActivity() {
               </div>
             </div>
             <div className="activity-calendar-panel">
-              <div className="activity-calendar-scroll">
+              <div
+                ref={showLatest}
+                className="activity-calendar-scroll"
+                role="region"
+                aria-label={t("Kalender kontribusi GitHub, tarik ke kanan untuk melihat bulan sebelumnya", "GitHub contribution calendar, drag right to see earlier months")}
+                tabIndex={0}
+                onPointerDown={(event) => {
+                  if (event.pointerType !== "mouse" || event.button !== 0) return;
+                  drag.current = { x: event.clientX, scrollLeft: event.currentTarget.scrollLeft };
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                }}
+                onPointerMove={(event) => {
+                  if (drag.current) event.currentTarget.scrollLeft = drag.current.scrollLeft + drag.current.x - event.clientX;
+                }}
+                onPointerUp={() => { drag.current = null; }}
+                onPointerCancel={() => { drag.current = null; }}
+                onLostPointerCapture={() => { drag.current = null; }}
+              >
                 <div className="activity-calendar-inner">
                   <div className="activity-months" aria-hidden="true">
                     {months.filter((month, index) => index === months.length - 1 || month.column !== months[index + 1].column).map((month) => <span key={month.column} style={{ gridColumnStart: month.column }}>{month.label}</span>)}
@@ -159,7 +151,7 @@ function GitHubActivity() {
                     <div
                       className="github-activity-grid"
                       role="img"
-                      aria-label={t(`${activity.total} kontribusi GitHub dalam 365 hari terakhir`, `${activity.total} GitHub contributions in the last 365 days`)}
+                      aria-label={t("Grafik kontribusi GitHub satu tahun terakhir", "GitHub contribution graph for the last year")}
                     >
                       {Array.from({ length: blanks }, (_, index) => <span key={`blank-${index}`} className="activity-blank" />)}
                       {activity.days.map((day) => (
@@ -170,7 +162,7 @@ function GitHubActivity() {
                 </div>
               </div>
               <div className="activity-calendar-footer">
-                <span className="activity-handle">@{new URL(profile.github).pathname.slice(1)}</span>
+                <span className="activity-handle">@{username} · {t("tarik ke kanan untuk bulan sebelumnya", "drag right for earlier months")}</span>
                 <div className="github-activity-legend" aria-hidden="true">
                   <span>{t("Sedikit", "Less")}</span>
                   {[0, 1, 2, 3, 4].map((level) => <i key={level} className={`activity-level-${level}`} />)}
@@ -182,7 +174,7 @@ function GitHubActivity() {
         ) : (
           <p className="github-activity-status" role="status">
             {failed
-              ? t("Aktivitas GitHub belum dapat dimuat.", "GitHub activity is unavailable.")
+              ? t("Aktivitas belum dapat dimuat.", "Activity is unavailable.")
               : t("Memuat aktivitas GitHub...", "Loading GitHub activity...")}
           </p>
         )}
@@ -209,8 +201,7 @@ export default function Technology() {
     <section id="skill" className="technology section" aria-labelledby="technology-title">
       <div className="container technology-head">
         <Reveal>
-          <span className="eyebrow">{t("TEKNOLOGI / 01", "TECHNOLOGY / 01")}</span>
-          <h2 id="technology-title">Technology<span className="accent-period">.</span></h2>
+          <h2 id="technology-title" aria-label="Technology."><DecryptedText text="Technology" replayLabel={t("Ulangi animasi Technology", "Replay Technology animation")} /><span className="accent-period">.</span></h2>
         </Reveal>
         <p>{t("Bahasa, framework, platform, dan alat yang saya gunakan untuk membangun produk digital.", "Languages, frameworks, platforms, and tools I use to build digital products.")}</p>
       </div>

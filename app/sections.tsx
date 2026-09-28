@@ -1,15 +1,15 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { flushSync } from "react-dom";
 import Image from "next/image";
 import dynamic from "next/dynamic";
 import {
   motion,
+  useInView,
   useReducedMotion,
 } from "motion/react";
 import GlassSurface from "./glass-surface";
 import {
-  IconPlayerPause,
-  IconPlayerPlay,
   IconArrowUpRight,
   IconArrowUp,
   IconBrandGithub,
@@ -24,12 +24,14 @@ import {
 import { useCopy } from "./preferences";
 import { profile } from "./data";
 import { activeSection } from "./navigation";
+import ScrollReveal from "./scroll-reveal";
 const Lanyard = dynamic(() => import("./lanyard"), {
   ssr: false,
   loading: () => (
     <div className="lanyard-loading" aria-label="Loading lanyard" />
   ),
 });
+const PixelBlast = dynamic(() => import("./pixel-blast"), { ssr: false });
 
 export function Reveal({
   children,
@@ -44,7 +46,7 @@ export function Reveal({
       className={className}
       initial={reduced ? false : { opacity: 0, y: 22 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.12 }}
+      viewport={{ once: false, amount: 0.12 }}
       transition={{ duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
     >
       {children}
@@ -112,13 +114,32 @@ export function Header() {
       system.removeEventListener("change", update);
     };
   }, []);
-  function toggleTheme() {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    document.documentElement.dataset.theme = next;
-    try {
-      localStorage.setItem("portfolio-theme", next);
-    } catch {}
+  function toggleTheme(event: MouseEvent<HTMLButtonElement>) {
+    const root = document.documentElement;
+    const next = root.dataset.theme === "dark" ? "light" : "dark";
+    const changeTheme = () => {
+      root.dataset.theme = next;
+      flushSync(() => setTheme(next));
+      try {
+        localStorage.setItem("portfolio-theme", next);
+      } catch {}
+    };
+    if (reduced || !document.startViewTransition) {
+      changeTheme();
+      return;
+    }
+
+    const button = event.currentTarget.getBoundingClientRect();
+    const x = button.left + button.width / 2;
+    const y = button.top + button.height / 2;
+    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+    const transition = document.startViewTransition(changeTheme);
+    transition.ready.then(() => {
+      root.animate(
+        { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+        { duration: 700, easing: "ease-in-out", pseudoElement: "::view-transition-new(root)" },
+      );
+    }).catch(() => {});
   }
   return (
     <header className={`nav-wrap ${scrolled ? "is-scrolled" : ""}`}>
@@ -217,10 +238,9 @@ export function Header() {
 }
 export function Hero() {
   const { t } = useCopy();
-  const [paused, setPaused] = useState(false);
   return (
     <section
-      className={`hero ${paused ? "marquee-paused" : ""}`}
+      className="hero"
       id="home"
       aria-labelledby="hero-title"
     >
@@ -264,18 +284,6 @@ export function Hero() {
           </a>
         </div>
       </div>
-      <button
-        className="motion-control"
-        onClick={() => setPaused(!paused)}
-        aria-pressed={paused}
-        aria-label={
-          paused
-            ? t("Lanjutkan animasi", "Resume animation")
-            : t("Jeda animasi", "Pause animation")
-        }
-      >
-        {paused ? <IconPlayerPlay size={16} /> : <IconPlayerPause size={16} />}
-      </button>
     </section>
   );
 }
@@ -332,24 +340,42 @@ function SocialLinks() {
 }
 export function About() {
   const { t } = useCopy();
+  const nameRef = useRef<HTMLHeadingElement>(null);
+  const nameInView = useInView(nameRef, { once: false, amount: 0.1 });
+  const reduced = useReducedMotion();
+  const name = profile.name.replace(" ", "\n");
+  const [typedName, setTypedName] = useState("");
+  useEffect(() => {
+    if (!nameInView || reduced) {
+      setTypedName(reduced ? name : "");
+      return;
+    }
+    let index = 0;
+    const timer = window.setInterval(() => {
+      index++;
+      setTypedName(name.slice(0, index));
+      if (index === name.length) window.clearInterval(timer);
+    }, 65);
+    return () => window.clearInterval(timer);
+  }, [nameInView, reduced]);
   return (
     <section id="about" className="about section container">
-      <Reveal className="about-copy">
+      <div className="about-copy">
         <span className="eyebrow">ABOUT ME</span>
-        <h2>
-          Asarya
-          <br />
-          Jachred Alotia<span className="accent-period">.</span>
+        <h2 ref={nameRef} className="typing-name" aria-label={`${profile.name}.`}>
+          <span aria-hidden="true" className="typing-name-text">{typedName}</span>
+          {typedName === name && <span aria-hidden="true" className="accent-period">.</span>}
+          <span aria-hidden="true" className="typing-cursor" />
         </h2>
         <p className="role-line">
           Computer Science Student<span>Software Engineering</span>
         </p>
-        <p className="body-copy">
-          {t(
-            "Saya mahasiswa Computer Science di BINUS University dengan peminatan Software Engineering. Melalui proyek kampus, saya mengembangkan website dan aplikasi sambil memperdalam kemampuan pemrograman.",
-            "I am a Computer Science student at BINUS University, specialising in Software Engineering. Through university projects, I build websites and applications while developing my programming skills.",
+        <ScrollReveal
+          text={t(
+            "Saya mahasiswa Computer Science di BINUS University dengan peminatan Software Engineering. Saya senang membangun aplikasi mobile dan website, mulai dari merancang antarmuka hingga menghubungkannya dengan backend dan data. Melalui beberapa proyek perkuliahan, saya mendapat pengalaman bekerja secara fullstack dan mengembangkan fitur yang berangkat dari kebutuhan pengguna. Saya ingin terus mengasah kemampuan tersebut dan berfokus pada aplikasi serta website yang berguna dan mudah digunakan.",
+            "I study Computer Science at BINUS University with a focus on Software Engineering. I enjoy building mobile apps and websites, from designing interfaces to connecting them with backend services and data. Through university projects, I have gained fullstack experience and built features around users' needs. I want to keep improving those skills and focus on making apps and websites that are useful and easy to use.",
           )}
-        </p>
+        />
         <SocialLinks />
         <div className="about-facts">
           <div>
@@ -361,9 +387,18 @@ export function About() {
             <p>Web & Mobile Development</p>
           </div>
         </div>
-      </Reveal>
+      </div>
       <div className="lanyard-area">
-        <Lanyard />
+        <Lanyard
+          position={[0, 0, 20]}
+          gravity={[0, -40, 0]}
+          fov={16}
+          frontImage="/lanyard/front.png"
+          backImage="/lanyard/back.png"
+          imageFit="cover"
+          lanyardImage="/lanyard/strap.png"
+          lanyardWidth={1}
+        />
       </div>
     </section>
   );
@@ -373,9 +408,10 @@ export function Contact() {
   const [status, setStatus] = useState("");
   return (
     <section id="contact" className="contact section container">
+      <div className="contact-pixel" aria-hidden="true"><PixelBlast /></div>
       <Reveal className="contact-copy">
         <span className="eyebrow">CONTACT</span>
-        <h2>{t("Mari terhubung.", "Let’s connect.")}</h2>
+        <h2>Let’s connect.</h2>
         <p className="body-copy">
           {t(
             "Punya proyek, peluang kerja, atau sekadar ingin menyapa? Saya senang mendengarnya.",
@@ -410,7 +446,7 @@ export function Contact() {
           <input
             name="name"
             autoComplete="name"
-            placeholder={t("Nama kamu", "Your name")}
+            placeholder="John Doe"
             required
             maxLength={100}
           />
@@ -421,7 +457,7 @@ export function Contact() {
             type="email"
             name="email"
             autoComplete="email"
-            placeholder="you@example.com"
+            placeholder="john.doe@example.com"
             required
             maxLength={254}
           />
@@ -431,8 +467,8 @@ export function Contact() {
           <textarea
             name="message"
             placeholder={t(
-              "Ceritakan sedikit tentang idemu...",
-              "Tell me a little about your idea...",
+              "Halo Asarya, saya ingin membahas proyek website...",
+              "Hi Asarya, I’d like to discuss a website project...",
             )}
             required
             maxLength={3000}

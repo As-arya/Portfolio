@@ -4,7 +4,7 @@ Implementasi berada di `app/lanyard.tsx`, mengikuti pola rope joint dan spherica
 
 ## Aset
 
-- `public/lanyard/strap.png`: desain BINUS pengguna, ditampilkan sekali dengan `repeat={[-1, 1]}`. Nilai negatif mempertahankan arah tulisan pada kurva tali.
+- `public/lanyard/strap.png`: desain BINUS pengguna, ditampilkan sekali dengan `repeat={[-1, 1]}`. UV digeser agar logo terlihat di bawah pangkal tali yang berada di luar frame.
 - `public/lanyard/front.png` dan `back.png`: desain pengguna, dipasang dengan perbandingan ukuran asli (cover).
 - `public/lanyard/card.glb`: model kartu. Lisensi ada di folder yang sama.
 
@@ -12,9 +12,9 @@ Atlas kartu memakai ukuran tekstur asli model. Area di luar kedua sisi diisi war
 
 ## Animasi
 
-Reset hanya disiapkan ketika scroll sudah mencapai bagian paling atas (toleransi 2 px) dan seluruh canvas berada di luar viewport. Canvas dan aset tetap terpasang. Posisi awal kartu dan tali terlipat berada di atas kamera; gravitasi menjatuhkannya ketika About kembali terlihat. Pangkal tali juga berada di luar kamera, dengan transisi transparan di tepi atas canvas.
+Reset hanya disiapkan ketika scroll sudah mencapai bagian paling atas (toleransi 2 px) dan seluruh canvas berada di luar viewport. Canvas dan aset tetap terpasang. Posisi awal kartu dan tali terlipat berada di atas kamera; ketika About terlihat, semua body dibangunkan, dan pegas menarik ruas tali melewati anchor agar kartu jatuh otomatis. Pangkal tali juga berada di luar kamera, dengan transisi transparan di tepi atas canvas.
 
-Kartu tetap berupa benda dinamis saat ditarik. Spherical joint sementara menghubungkan titik yang diklik ke pointer sehingga kartu bebas berputar. Saat dilepas, momentum dipertahankan; koreksi arah depan/belakang yang lembut baru aktif setelah 2,5 detik. Foto menggunakan material tanpa pencahayaan dan tanpa tone mapping untuk mempertahankan warna aset; klip logam tetap menerima cahaya. Preferensi reduced motion memakai kartu statis.
+Saat ditarik, kartu bergerak secara kinematik sementara tiga ruas tali tetap disimulasikan. Spring joint memungkinkan tali meregang hingga kartu keluar dari area tampilan; rope joint membatasi tarikan ekstrem. Saat dilepas, kartu langsung kembali dinamis dengan velocity dari gerakan mouse, sementara pegas mengembalikannya tanpa teleport. Koreksi rotasi hanya bekerja pada arah depan/belakang setelah ayunan melambat; kemiringan kartu tetap mengikuti fisika. Foto menggunakan material tanpa pencahayaan dan tanpa tone mapping untuk mempertahankan warna aset; klip logam tetap menerima cahaya. Preferensi reduced motion memakai kartu statis.
 
 Jalankan `node tests/lanyard-motion.test.mjs` (Node.js 22.18+) untuk memeriksa batas reset dan geometri awal di luar frame.
 

@@ -29,8 +29,8 @@ import {
   Physics,
   RigidBody,
   useRopeJoint,
+  useSpringJoint,
   useSphericalJoint,
-  useRapier,
   type RapierRigidBody,
 } from "@react-three/rapier";
 import { MeshLineGeometry, MeshLineMaterial } from "meshline";
@@ -40,7 +40,10 @@ import { IconArrowsMove, IconRotate, IconHandGrab } from "@tabler/icons-react";
 import { useCopy } from "./preferences";
 import {
   anchorHeight,
-  ropeLength,
+  springRestLength,
+  springStiffness,
+  jointMass,
+  maxRopeSegment,
   cardAnchorOffset,
   dropPositions,
   canResetLanyard,
@@ -69,12 +72,30 @@ class SceneBoundary extends Component<
     return this.state.failed ? this.props.fallback : this.props.children;
   }
 }
-function StaticCard({ flipped }: { flipped: boolean }) {
+type LanyardProps = {
+  position?: [number, number, number];
+  gravity?: [number, number, number];
+  fov?: number;
+  frontImage?: string;
+  backImage?: string;
+  imageFit?: "cover" | "contain";
+  lanyardImage?: string;
+  lanyardWidth?: number;
+};
+function StaticCard({
+  flipped,
+  frontImage,
+  backImage,
+}: {
+  flipped: boolean;
+  frontImage: string;
+  backImage: string;
+}) {
   return (
     <div className="lanyard-static">
       <div className="static-strap" />
       <Image
-        src={flipped ? "/lanyard/back.png" : "/lanyard/front.png"}
+        src={flipped ? backImage : frontImage}
         width={256}
         height={384}
         alt={flipped ? "Tech stack stickers" : "Asarya Jachred Alotia"}
@@ -82,7 +103,16 @@ function StaticCard({ flipped }: { flipped: boolean }) {
     </div>
   );
 }
-export default function Lanyard() {
+export default function Lanyard({
+  position = [0, 0, 20],
+  gravity = [0, -40, 0],
+  fov = 20,
+  frontImage = "/lanyard/front.png",
+  backImage = "/lanyard/back.png",
+  imageFit = "cover",
+  lanyardImage = "/lanyard/strap.png",
+  lanyardWidth = 1,
+}: LanyardProps) {
   const { t } = useCopy();
   const host = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false),
@@ -133,7 +163,9 @@ export default function Lanyard() {
     window.addEventListener("scroll", checkHome, { passive: true });
     return () => window.removeEventListener("scroll", checkHome);
   }, []);
-  const fallback = <StaticCard flipped={flipped} />;
+  const fallback = (
+    <StaticCard flipped={flipped} frontImage={frontImage} backImage={backImage} />
+  );
   return (
     <div
       className="lanyard-scene"
@@ -154,7 +186,7 @@ export default function Lanyard() {
         ) : loaded ? (
           <SceneBoundary fallback={fallback} onFailure={() => setFailed(true)}>
             <Canvas
-              camera={{ position: [0, 0, 16], fov: 24 }}
+              camera={{ position, fov }}
               dpr={[1, 1.5]}
               frameloop={visible ? "always" : "never"}
               gl={{ alpha: true, antialias: true }}
@@ -163,7 +195,7 @@ export default function Lanyard() {
               <ambientLight intensity={0.7} />
               <Suspense fallback={null}>
                 <Physics
-                  gravity={[0, -16, 0]}
+                  gravity={gravity}
                   timeStep={1 / 60}
                   interpolate
                   numSolverIterations={12}
@@ -171,9 +203,15 @@ export default function Lanyard() {
                 >
                   <Band
                     key={replay}
+                    visible={visible}
                     flipped={flipped}
                     impulse={impulse}
                     onReady={() => setReady(true)}
+                    frontImage={frontImage}
+                    backImage={backImage}
+                    imageFit={imageFit}
+                    lanyardImage={lanyardImage}
+                    lanyardWidth={lanyardWidth}
                   />
                 </Physics>
                 <Environment resolution={128}>
@@ -238,13 +276,25 @@ export default function Lanyard() {
 }
 type Body = RapierRigidBody;
 function Band({
+  visible,
   flipped,
   impulse,
   onReady,
+  frontImage,
+  backImage,
+  imageFit,
+  lanyardImage,
+  lanyardWidth,
 }: {
+  visible: boolean;
   flipped: boolean;
   impulse: number;
   onReady: () => void;
+  frontImage: string;
+  backImage: string;
+  imageFit: "cover" | "contain";
+  lanyardImage: string;
+  lanyardWidth: number;
 }) {
   const fixed = useRef<Body>(null!),
     j1 = useRef<Body>(null!),
@@ -254,9 +304,10 @@ function Band({
   const band = useRef<THREE.Mesh<MeshLineGeometry, MeshLineMaterial>>(null!);
   const dragDepth = useRef(0);
   const freeSpinUntil = useRef(0);
-  const { rapier } = useRapier();
   const [dragged, setDragged] = useState<THREE.Vector3 | null>(null);
-  const [returning, setReturning] = useState(false);
+  const dragVelocity = useRef(new THREE.Vector3());
+  const previousDragPoint = useRef(new THREE.Vector3());
+  const releasePending = useRef(false);
   const { nodes, materials } = useGLTF("/lanyard/card.glb") as unknown as {
     nodes: Record<string, THREE.Mesh>;
     materials: {
@@ -265,9 +316,9 @@ function Band({
     };
   };
   const [front, back, strap] = useTexture([
-    "/lanyard/front.png",
-    "/lanyard/back.png",
-    "/lanyard/strap.png",
+    frontImage,
+    backImage,
+    lanyardImage,
   ]);
   const cardMap = useMemo(() => {
     const base = materials.base.map!;
@@ -283,7 +334,10 @@ function Band({
     const drawFace = (img: HTMLImageElement, x: number, height: number) => {
       const w = canvas.width / 2,
         h = Math.ceil(canvas.height * height);
-      const scale = Math.max(w / img.width, h / img.height);
+      const scale = (imageFit === "contain" ? Math.min : Math.max)(
+        w / img.width,
+        h / img.height,
+      );
       ctx.save();
       ctx.beginPath();
       ctx.rect(x, 0, w, h);
@@ -306,15 +360,14 @@ function Band({
     map.flipY = base.flipY;
     map.anisotropy = 8;
     return map;
-  }, [front, back, materials]);
+  }, [front, back, imageFit, materials]);
   useEffect(() => () => cardMap.dispose(), [cardMap]);
   const math = useMemo(
     () => ({
       point: new THREE.Vector3(),
       direction: new THREE.Vector3(),
       attachment: new THREE.Vector3(),
-      returnPoint: new THREE.Vector3(),
-      returnTarget: new THREE.Vector3(0, -0.5, 0),
+      slack: 0,
       p1: new THREE.Vector3(...dropPositions[0]),
       p2: new THREE.Vector3(...dropPositions[1]),
       curve: new THREE.CatmullRomCurve3(
@@ -326,12 +379,21 @@ function Band({
   const bodyProps = {
     colliders: false as const,
     canSleep: true,
-    angularDamping: 1.15,
-    linearDamping: 1.15,
+    angularDamping: 2.2,
+    linearDamping: 1.6,
   };
-  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], ropeLength]);
-  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], ropeLength]);
-  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], ropeLength]);
+  useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], maxRopeSegment]);
+  useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], maxRopeSegment]);
+  useRopeJoint(j2, j3, [[0, 0, 0], [0, 0, 0], maxRopeSegment]);
+  useSpringJoint(fixed, j1, [
+    [0, 0, 0], [0, 0, 0], springRestLength, springStiffness, 1,
+  ]);
+  useSpringJoint(j1, j2, [
+    [0, 0, 0], [0, 0, 0], springRestLength, springStiffness, 1,
+  ]);
+  useSpringJoint(j2, j3, [
+    [0, 0, 0], [0, 0, 0], springRestLength, springStiffness, 1,
+  ]);
   useSphericalJoint(j3, card, [
     [0, 0, 0],
     [0, cardAnchorOffset, 0],
@@ -339,6 +401,10 @@ function Band({
   useEffect(() => {
     onReady();
   }, []); // The scene owns one ready notification per mount.
+  useEffect(() => {
+    if (!visible) return;
+    [j1, j2, j3, card].forEach((body) => body.current?.wakeUp());
+  }, [visible]);
   useEffect(() => {
     if (impulse && card.current) {
       card.current.applyImpulse({ x: 1.5, y: 0.7, z: 0.3 }, true);
@@ -352,13 +418,10 @@ function Band({
   }, [flipped]);
   strap.wrapS = strap.wrapT = THREE.RepeatWrapping;
   function endDrag() {
-    freeSpinUntil.current = performance.now() + 1500;
+    if (!dragged || releasePending.current) return;
+    releasePending.current = true;
+    freeSpinUntil.current = performance.now() + 900;
     setDragged(null);
-    const position = card.current.translation();
-    setReturning(
-      Math.hypot(position.x, position.y - anchorHeight, position.z) >
-        ropeLength * 3 + cardAnchorOffset + 0.1,
-    );
   }
   useEffect(() => {
     if (!dragged) return;
@@ -389,37 +452,40 @@ function Band({
         ),
       );
       math.point.sub(dragged);
-      math.point.set(...clampDragPoint(math.point.x, math.point.y, math.point.z));
+      math.attachment
+        .set(0, cardAnchorOffset, 0)
+        .applyQuaternion(card.current.rotation());
+      math.point.set(
+        ...clampDragPoint(
+          math.point.x,
+          math.point.y,
+          math.point.z,
+          math.attachment,
+        ),
+      );
       [card, j1, j2, j3].forEach((r) => r.current.wakeUp());
       if (
         Number.isFinite(math.point.x) &&
         Number.isFinite(math.point.y) &&
         Number.isFinite(math.point.z)
-      ) card.current.setNextKinematicTranslation(math.point);
-    } else if (returning) {
-      math.returnPoint.copy(card.current.translation());
-      math.returnPoint.lerp(math.returnTarget, 1 - Math.exp(-delta * 7));
-      card.current.setNextKinematicTranslation(math.returnPoint);
-      if (math.returnPoint.distanceToSquared(math.returnTarget) < 0.01) {
-        // Restore unstretched joints before handing the card back to physics.
-        [j1, j2, j3, card].forEach((body, index) => {
-          body.current.setTranslation(
-            { x: 0, y: [3.3, 2.1, 0.9, -0.55][index], z: 0 },
-            true,
-          );
-          body.current.setLinvel({ x: 0, y: 0, z: 0 }, true);
-          body.current.setAngvel({ x: 0, y: 0, z: 0 }, true);
-        });
-        card.current.setRotation(
-          { x: 0, y: flipped ? 1 : 0, z: 0, w: flipped ? 0 : 1 },
-          true,
-        );
-        card.current.setBodyType(rapier.RigidBodyType.Dynamic, true);
-        setReturning(false);
+      ) {
+        math.direction
+          .copy(math.point)
+          .sub(previousDragPoint.current)
+          .divideScalar(Math.max(dt, 1 / 120))
+          .clampLength(0, 12);
+        dragVelocity.current.lerp(math.direction, 1 - Math.exp(-delta * 20));
+        previousDragPoint.current.copy(math.point);
+        card.current.setNextKinematicTranslation(math.point);
       }
+    } else if (releasePending.current) {
+      releasePending.current = false;
+      // Transfer the measured drag velocity when the body becomes dynamic.
+      dragVelocity.current.clampLength(0, 12);
+      card.current.setLinvel(dragVelocity.current, true);
     }
-    math.p1.lerp(j1.current.translation(), 1 - Math.exp(-delta * 18));
-    math.p2.lerp(j2.current.translation(), 1 - Math.exp(-delta * 18));
+    math.p1.lerp(j1.current.translation(), 1 - Math.exp(-delta * 12));
+    math.p2.lerp(j2.current.translation(), 1 - Math.exp(-delta * 12));
     math.attachment
       .set(0, cardAnchorOffset, 0)
       .applyQuaternion(card.current.rotation())
@@ -428,22 +494,42 @@ function Band({
     math.curve.points[1].copy(math.p2);
     math.curve.points[2].copy(math.p1);
     math.curve.points[3].copy(fixed.current.translation());
+    math.slack = THREE.MathUtils.damp(math.slack, dragged ? 0 : 0.11, 8, delta);
+    math.curve.points[1].z += math.slack;
+    math.curve.points[2].z += math.slack * 0.6;
     math.curve.curveType = "chordal";
     band.current.geometry.setPoints(math.curve.getPoints(32));
-    if (!dragged && !returning && performance.now() > freeSpinUntil.current) {
-      const q = card.current.rotation(),
-        velocity = card.current.angvel();
-      const yaw = Math.atan2(
-        2 * (q.w * q.y + q.x * q.z),
-        1 - 2 * (q.y * q.y + q.z * q.z),
-      );
-      const target = flipped ? Math.PI : 0;
-      const error = Math.atan2(Math.sin(target - yaw), Math.cos(target - yaw));
-      if (Math.abs(error) > 0.008)
-        card.current.setAngvel(
-          { x: velocity.x, y: velocity.y + error * delta * 2, z: velocity.z },
-          true,
+    // The fixed anchor is offscreen; shift the printed logo down the visible band.
+    const uv = band.current.geometry.getAttribute("uv") as THREE.BufferAttribute;
+    for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) + 0.25);
+    uv.needsUpdate = true;
+    if (!dragged && performance.now() > freeSpinUntil.current) {
+      const linear = card.current.linvel();
+      if (Math.hypot(linear.x, linear.y, linear.z) < 1.5) {
+        const q = card.current.rotation();
+        const angular = card.current.angvel();
+        const yaw = Math.atan2(
+          2 * (q.w * q.y + q.x * q.z),
+          1 - 2 * (q.y * q.y + q.z * q.z),
         );
+        const target = flipped ? Math.PI : 0;
+        const error = Math.atan2(Math.sin(target - yaw), Math.cos(target - yaw));
+        if (Math.abs(error) > 0.015 || Math.abs(angular.y) > 0.03) {
+          card.current.setAngvel(
+            {
+              x: angular.x,
+              y: THREE.MathUtils.damp(
+                angular.y,
+                THREE.MathUtils.clamp(error * 3, -2.5, 2.5),
+                4,
+                delta,
+              ),
+              z: angular.z,
+            },
+            true,
+          );
+        }
+      }
     }
   });
   return (
@@ -456,19 +542,19 @@ function Band({
           type="fixed"
         />
         <RigidBody ref={j1} position={dropPositions[0]} {...bodyProps}>
-          <BallCollider args={[0.08]} collisionGroups={0} />
+          <BallCollider args={[0.08]} mass={jointMass} collisionGroups={0} />
         </RigidBody>
         <RigidBody ref={j2} position={dropPositions[1]} {...bodyProps}>
-          <BallCollider args={[0.08]} collisionGroups={0} />
+          <BallCollider args={[0.08]} mass={jointMass} collisionGroups={0} />
         </RigidBody>
         <RigidBody ref={j3} position={dropPositions[2]} {...bodyProps}>
-          <BallCollider args={[0.08]} collisionGroups={0} />
+          <BallCollider args={[0.08]} mass={jointMass} collisionGroups={0} />
         </RigidBody>
         <RigidBody
           ref={card}
           position={dropPositions[3]}
           {...bodyProps}
-          type={dragged || returning ? "kinematicPosition" : "dynamic"}
+          type={dragged ? "kinematicPosition" : "dynamic"}
           ccd
         >
           <CuboidCollider args={[0.8, 1.125, 0.04]} />
@@ -479,7 +565,9 @@ function Band({
               e.stopPropagation();
               (e.target as Element).setPointerCapture(e.pointerId);
               dragDepth.current = e.point.z;
-              setReturning(false);
+              releasePending.current = false;
+              dragVelocity.current.set(0, 0, 0);
+              previousDragPoint.current.copy(card.current.translation());
               setDragged(
                 new THREE.Vector3()
                   .copy(e.point)
@@ -514,7 +602,7 @@ function Band({
           useMap={1}
           map={strap}
           repeat={[-1, 1]}
-          lineWidth={0.8}
+          lineWidth={lanyardWidth}
           toneMapped={false}
         />
       </mesh>

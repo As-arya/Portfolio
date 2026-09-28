@@ -10,6 +10,14 @@
   --glass-rim: rgba(226, 238, 247, 0.45);
   --glass-sheen: rgba(236, 246, 255, 0.12);
 }
+::view-transition-image-pair(root) {
+  isolation: auto;
+}
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
 .glass {
   position: relative;
   isolation: isolate;

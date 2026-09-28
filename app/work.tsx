@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   IconArrowUpRight,
@@ -15,6 +16,9 @@ import {
 import { useCopy } from "./preferences";
 import { profile, projects, type Project } from "./data";
 import { Reveal } from "./sections";
+import PixelCard from "./pixel-card";
+
+const PixelBlast = dynamic(() => import("./pixel-blast"), { ssr: false });
 
 function ProjectImage({
   project,
@@ -75,7 +79,7 @@ export function Projects() {
       <Reveal className="projects-heading">
         <div>
           <span className="eyebrow">SELECTED WORK</span>
-          <h2>{t("Proyek pilihan.", "Selected projects.")}</h2>
+          <h2>Selected projects.</h2>
         </div>
         <p>
           {t(
@@ -88,21 +92,24 @@ export function Projects() {
         <AnimatePresence initial={false}>
         {projects.slice(0, expanded ? undefined : 3).map((project, i) => (
           <motion.div
-            className={`project-row ${i % 2 ? "reverse" : ""}`}
+            className={`project-row ${i % 2 ? "reverse" : ""} ${!expanded && i === Math.min(projects.length, 3) - 1 ? "project-row-faded" : ""}`}
             key={project.id}
-            initial={i < 3 || reduced ? false : { opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={reduced ? false : { opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, amount: 0.12 }}
             exit={{ opacity: 0, y: -16 }}
             transition={{ duration: reduced ? 0 : 0.4 }}
           >
             <article id={`project-${project.id}`}>
-              <button
-                className="project-image-button"
-                onClick={() => setView(project)}
-                aria-label={`${t("Lihat detail", "View details")}: ${t(project.title, project.titleEn)}`}
-              >
-                <ProjectImage project={project} />
-              </button>
+              <PixelCard>
+                <button
+                  className="project-image-button"
+                  onClick={() => setView(project)}
+                  aria-label={`${t("Lihat detail", "View details")}: ${t(project.title, project.titleEn)}`}
+                >
+                  <ProjectImage project={project} />
+                </button>
+              </PixelCard>
               <div className="project-copy">
                 <span className="eyebrow">
                   {t(project.category, project.categoryEn)}
@@ -164,6 +171,7 @@ export function Projects() {
         }}
         aria-labelledby="dialog-title"
       >
+        <div className="dialog-pixel" aria-hidden="true">{view && <PixelBlast />}</div>
         <div className="dialog-inner">
           <button
             autoFocus

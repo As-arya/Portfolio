@@ -6,13 +6,17 @@ import { useInView, useMotionValue, useReducedMotion, useSpring } from "motion/r
 // React Bits CountUp adapted for whole-number contribution statistics.
 export default function CountUp({ to, suffix = "" }: { to: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const inView = useInView(ref, { once: true });
+  const inView = useInView(ref, { once: false });
   const reduced = useReducedMotion();
   const value = useMotionValue(0);
   const spring = useSpring(value, { stiffness: 80, damping: 24 });
   useEffect(() => {
     if (inView) value.set(to);
-  }, [inView, to, value]);
+    else {
+      value.set(0);
+      spring.jump(0);
+    }
+  }, [inView, to, value, spring]);
   useEffect(() => {
     const format = (n: number) => `${new Intl.NumberFormat("en-US").format(Math.round(n))}${suffix}`;
     if (reduced) {
