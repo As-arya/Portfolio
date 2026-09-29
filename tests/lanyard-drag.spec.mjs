@@ -86,3 +86,20 @@ test("long drag inside the frame returns progressively", async ({ page }) => {
   await expect.poll(cardTop, { timeout: 3000 }).toBeLessThan(held - 15);
   await expect.poll(cardTop, { timeout: 3000 }).toBeLessThan(initial + 60);
 });
+
+test("flip shows the back within a second", async ({ page }) => {
+  await page.goto("http://127.0.0.1:3000/#about");
+  await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
+  const stage = page.locator(".lanyard-stage");
+  await stage.scrollIntoViewIfNeeded();
+  await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true");
+  await page.waitForTimeout(1400);
+  await page.getByRole("button", { name: /Balik kartu|Flip card/ }).click();
+  await page.waitForTimeout(800);
+  const { data, info } = await sharp(await stage.screenshot()).raw().toBuffer({ resolveWithObject: true });
+  let blue = 0;
+  for (let i = 0; i < data.length; i += info.channels) {
+    if (data[i + 2] > 140 && data[i + 2] > data[i] * 1.4 && data[i + 2] > data[i + 1] * 1.1) blue++;
+  }
+  expect(blue).toBeGreaterThan(1000);
+});

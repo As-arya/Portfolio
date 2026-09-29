@@ -304,6 +304,12 @@ function Band({
   const band = useRef<THREE.Mesh<MeshLineGeometry, MeshLineMaterial>>(null!);
   const dragDepth = useRef(0);
   const freeSpinUntil = useRef(0);
+  const recoilStart = useRef(0);
+  const dragStart = useRef(new THREE.Vector3());
+  const dragRotation = useRef(new THREE.Quaternion());
+  const releaseSpin = useRef(new THREE.Vector3());
+  const flipPending = useRef(false);
+  const lastFlipped = useRef(flipped);
   const [dragged, setDragged] = useState<THREE.Vector3 | null>(null);
   const dragVelocity = useRef(new THREE.Vector3());
   const previousDragPoint = useRef(new THREE.Vector3());
@@ -367,6 +373,8 @@ function Band({
       point: new THREE.Vector3(),
       direction: new THREE.Vector3(),
       attachment: new THREE.Vector3(),
+      tilt: new THREE.Quaternion(),
+      tiltAngles: new THREE.Euler(),
       slack: 0,
       p1: new THREE.Vector3(...dropPositions[0]),
       p2: new THREE.Vector3(...dropPositions[1]),
@@ -380,7 +388,7 @@ function Band({
     colliders: false as const,
     canSleep: true,
     angularDamping: 2.2,
-    linearDamping: 1.6,
+    linearDamping: 5,
   };
   useRopeJoint(fixed, j1, [[0, 0, 0], [0, 0, 0], maxRopeSegment]);
   useRopeJoint(j1, j2, [[0, 0, 0], [0, 0, 0], maxRopeSegment]);
@@ -413,14 +421,31 @@ function Band({
     }
   }, [impulse]);
   useEffect(() => {
+    if (lastFlipped.current === flipped) return;
+    lastFlipped.current = flipped;
     card.current?.wakeUp();
     freeSpinUntil.current = 0;
+    flipPending.current = true;
   }, [flipped]);
   strap.wrapS = strap.wrapT = THREE.RepeatWrapping;
   function endDrag() {
     if (!dragged || releasePending.current) return;
     releasePending.current = true;
     freeSpinUntil.current = performance.now() + 900;
+    const position = card.current.translation();
+    const dx = position.x - dragStart.current.x;
+    const dy = position.y - dragStart.current.y;
+    if (Math.hypot(dx, dy, position.z - dragStart.current.z) > 0.5) {
+      recoilStart.current = performance.now();
+      freeSpinUntil.current = performance.now() + 1500;
+      releaseSpin.current
+        .set(
+          -dy * 0.7 - dragVelocity.current.y * 0.15,
+          dx * 0.7 + dragVelocity.current.x * 0.15,
+          (dragged.x * dragVelocity.current.y - dragged.y * dragVelocity.current.x) * 0.05,
+        )
+        .clampLength(0, 7);
+    }
     setDragged(null);
   }
   useEffect(() => {
@@ -477,12 +502,45 @@ function Band({
         dragVelocity.current.lerp(math.direction, 1 - Math.exp(-delta * 20));
         previousDragPoint.current.copy(math.point);
         card.current.setNextKinematicTranslation(math.point);
+        math.tiltAngles.set(
+          THREE.MathUtils.clamp((dragStart.current.y - math.point.y) * 0.5, -1.6, 1.6),
+          THREE.MathUtils.clamp((math.point.x - dragStart.current.x) * 0.5, -1.6, 1.6),
+          0,
+        );
+        math.tilt.setFromEuler(math.tiltAngles).premultiply(dragRotation.current);
+        card.current.setNextKinematicRotation(math.tilt);
       }
     } else if (releasePending.current) {
       releasePending.current = false;
       // Transfer the measured drag velocity when the body becomes dynamic.
       dragVelocity.current.clampLength(0, 12);
       card.current.setLinvel(dragVelocity.current, true);
+      if (recoilStart.current) {
+        math.attachment
+          .set(0, cardAnchorOffset, 0)
+          .applyQuaternion(card.current.rotation())
+          .add(card.current.translation());
+        math.direction
+          .copy(fixed.current.translation())
+          .sub(math.attachment);
+        const stretch = Math.max(0, math.direction.length() - 3);
+        if (stretch > 0)
+          card.current.applyImpulse(
+            math.direction.normalize().multiplyScalar(Math.min(stretch * 0.15, 0.7)),
+            true,
+          );
+        card.current.setAngvel(releaseSpin.current, true);
+        releaseSpin.current.set(0, 0, 0);
+      }
+    }
+    if (recoilStart.current) {
+      const progress = Math.min((performance.now() - recoilStart.current) / 1100, 1);
+      const damping = 0.35 + 4.65 * progress * progress;
+      [j1, j2, j3, card].forEach((body) =>
+        body.current.setLinearDamping(damping),
+      );
+      card.current.setAngularDamping(0.4 + 1.8 * progress * progress);
+      if (progress === 1) recoilStart.current = 0;
     }
     math.p1.lerp(j1.current.translation(), 1 - Math.exp(-delta * 12));
     math.p2.lerp(j2.current.translation(), 1 - Math.exp(-delta * 12));
@@ -503,9 +561,9 @@ function Band({
     const uv = band.current.geometry.getAttribute("uv") as THREE.BufferAttribute;
     for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) + 0.25);
     uv.needsUpdate = true;
-    if (!dragged && performance.now() > freeSpinUntil.current) {
+    if (!dragged && (flipPending.current || performance.now() > freeSpinUntil.current)) {
       const linear = card.current.linvel();
-      if (Math.hypot(linear.x, linear.y, linear.z) < 1.5) {
+      if (flipPending.current || Math.hypot(linear.x, linear.y, linear.z) < 1.5) {
         const q = card.current.rotation();
         const angular = card.current.angvel();
         const yaw = Math.atan2(
@@ -514,14 +572,16 @@ function Band({
         );
         const target = flipped ? Math.PI : 0;
         const error = Math.atan2(Math.sin(target - yaw), Math.cos(target - yaw));
+        if (Math.abs(error) < 0.04 && Math.abs(angular.y) < 0.2)
+          flipPending.current = false;
         if (Math.abs(error) > 0.015 || Math.abs(angular.y) > 0.03) {
           card.current.setAngvel(
             {
               x: angular.x,
               y: THREE.MathUtils.damp(
                 angular.y,
-                THREE.MathUtils.clamp(error * 3, -2.5, 2.5),
-                4,
+                THREE.MathUtils.clamp(error * 8, -7, 7),
+                12,
                 delta,
               ),
               z: angular.z,
@@ -567,6 +627,15 @@ function Band({
               dragDepth.current = e.point.z;
               releasePending.current = false;
               dragVelocity.current.set(0, 0, 0);
+              releaseSpin.current.set(0, 0, 0);
+              dragStart.current.copy(card.current.translation());
+              dragRotation.current.copy(card.current.rotation());
+              flipPending.current = false;
+              recoilStart.current = 0;
+              [j1, j2, j3, card].forEach((body) =>
+                body.current.setLinearDamping(5),
+              );
+              card.current.setAngularDamping(2.2);
               previousDragPoint.current.copy(card.current.translation());
               setDragged(
                 new THREE.Vector3()
