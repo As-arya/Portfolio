@@ -1,7 +1,12 @@
 import { Header, Hero, About, Contact, Footer } from "./sections";
 import { Projects } from "./work";
 import Technology from "./technology";
-export default function Page() {
+import { getAvailability, getPublishedProjects } from "../lib/repository";
+
+export const dynamic = "force-dynamic";
+
+export default async function Page() {
+  const [projects, availability] = await Promise.all([getPublishedProjects(), getAvailability()]);
   return (
     <>
       <a className="skip-link" href="#about">
@@ -9,10 +14,10 @@ export default function Page() {
       </a>
       <Header />
       <main>
-        <Hero />
+        <Hero availability={availability} />
         <About />
         <Technology />
-        <Projects />
+        <Projects projects={projects} />
         <Contact />
       </main>
       <Footer />

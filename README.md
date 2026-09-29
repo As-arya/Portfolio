@@ -1,10 +1,10 @@
 # Portfolio — Asarya Jachred Alotia
 
-Portofolio frontend untuk Asarya Jachred Alotia, mahasiswa Computer Science BINUS University dengan peminatan Software Engineering. Situs berisi Home, About, Skill, Projects, dan Contact, dengan pilihan tema terang/gelap serta bahasa Indonesia/Inggris.
+Portofolio Next.js untuk Asarya Jachred Alotia dengan pilihan tema terang/gelap, bahasa Indonesia/Inggris, detail proyek, dan admin pribadi. Backend memakai Firebase, Cloudinary, Gmail, dan Turnstile. Panduan konfigurasi lengkap ada di [`docs/LOCAL_SETUP.md`](docs/LOCAL_SETUP.md).
 
 ## Menjalankan secara lokal
 
-Gunakan Node.js 20.9 atau lebih baru dan npm. Dari folder `Portfolio`:
+Gunakan Node.js 24 dan npm. Dari folder `Portfolio`:
 
 ```bash
 npm ci
@@ -24,13 +24,12 @@ Cek regresi penentuan section navbar dengan `node tests/navigation.test.mjs` (No
 
 ## Mengubah isi
 
-- Ubah tautan sosial, daftar teknologi, dan data proyek di [`app/data.ts`](app/data.ts).
-- Tambahkan entri ke array `projects` untuk mengisi daftar proyek. Tiga proyek pertama tampil di halaman; tombol **More projects** menampilkan seluruh daftar. Nama, gambar, ringkasan, dan tautan proyek yang masih kosong saat ini adalah placeholder dan perlu diganti sebelum portfolio dibagikan ke perekrut.
-- Isi `image` proyek dengan path dari `public/`, misalnya `/images/project-1.webp`; isi `repository` dan `demo` jika tersedia.
+- Ubah tautan sosial dan daftar teknologi di [`app/data.ts`](app/data.ts). Tiga entri proyek di berkas itu adalah contoh yang dapat disalin sekali ke Firestore dengan `npm run seed`.
+- Setelah Firebase dikonfigurasi, kelola proyek, foto, isi dua bahasa, dan status kerja dari `/admin/login`.
 - Foto Home ada di `public/images/hero.webp`. Foto dan stiker kartu ada di `public/lanyard/front.png` dan `back.png`. Desain tali BINUS ada di `public/lanyard/strap.png`.
 - Lanyard interaktif ada di `app/lanyard.tsx`. Catatan aset dan pemeriksaan regresinya ada di [`docs/LANYARD.md`](docs/LANYARD.md).
 
-Form Contact saat ini hanya pratinjau: tombol kirim menampilkan pesan di halaman dan tidak mengirim email. GitHub sudah diarahkan ke [As-arya](https://github.com/As-arya); Instagram dan LinkedIn menampilkan placeholder sampai alamatnya diisi pada `app/data.ts`.
+Form Contact menyimpan pesan di Firestore dan mengirim notifikasi email setelah layanan dikonfigurasi. Tanpa kredensial, formulir akan menampilkan kegagalan pengiriman. GitHub sudah diarahkan ke [As-arya](https://github.com/As-arya).
 
 ## Teknologi dan kredit
 

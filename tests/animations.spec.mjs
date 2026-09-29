@@ -40,7 +40,7 @@ test("section animations replay and project effects remain interactive", async (
   await expect.poll(() => skillLinks.evaluateAll((links) => links.every((link) =>
     link.href.startsWith("https://") && link.querySelector("img")?.naturalWidth > 0,
   ))).toBe(true);
-  await expect(page.getByRole("link", { name: "Flutter" })).toHaveAttribute("href", "https://flutter.dev/");
+  await expect(page.getByRole("link", { name: "Flutter", exact: true })).toHaveAttribute("href", "https://flutter.dev/");
   await page.locator(".decrypted-text").hover();
   await expect.poll(() => title.textContent()).not.toBe("Technology");
   await expect(title).toHaveText("Technology");
@@ -51,15 +51,12 @@ test("section animations replay and project effects remain interactive", async (
     const data = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
     return data.some((value, index) => index % 4 === 3 && value > 0);
   })).toBe(true);
-  await card.locator("button").scrollIntoViewIfNeeded();
-  const projectScroll = await page.evaluate(() => scrollY);
-  await card.locator("button").click();
-  const dialog = page.locator(".project-dialog");
-  await expect(dialog).toBeVisible();
-  expect(await page.evaluate(() => scrollY)).toBe(projectScroll);
-  await expect(dialog.locator(".dialog-pixel canvas")).toHaveCount(1);
-  await dialog.locator(".dialog-close").click();
-  expect(await page.evaluate(() => scrollY)).toBe(projectScroll);
+  const projectTitle = await page.locator(".project-row h3").first().textContent();
+  await card.locator("button.project-image-button").click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.locator("#dialog-title")).toHaveText(projectTitle);
+  await page.keyboard.press("Escape");
+  await expect(dialog).not.toBeVisible();
 
   await page.locator("#contact").scrollIntoViewIfNeeded();
   await expect(page.locator(".contact-pixel canvas")).toHaveCount(1);

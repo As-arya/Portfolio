@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import Script from "next/script";
 import {
   motion,
   useInView,
@@ -33,6 +34,24 @@ const Lanyard = dynamic(() => import("./lanyard"), {
 });
 const PixelBlast = dynamic(() => import("./pixel-blast"), { ssr: false });
 
+type Turnstile = {
+  render: (container: HTMLElement, options: {
+    sitekey: string;
+    callback: (token: string) => void;
+    "expired-callback": () => void;
+    "error-callback": () => void;
+  }) => string;
+  reset: (widgetId: string) => void;
+  remove: (widgetId: string) => void;
+};
+
+const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ||
+  (process.env.NODE_ENV === "development" ? "1x00000000000000000000AA" : "");
+
+function turnstile() {
+  return (window as Window & { turnstile?: Turnstile }).turnstile;
+}
+
 export function Reveal({
   children,
   className = "",
@@ -53,7 +72,7 @@ export function Reveal({
     </motion.div>
   );
 }
-export function Header() {
+export function Header({ homeLinks = false }: { homeLinks?: boolean }) {
   const { lang, setLang, t } = useCopy();
   const [theme, setTheme] = useState("light");
   const [menu, setMenu] = useState(false);
@@ -149,7 +168,7 @@ export function Header() {
       >
         <GlassSurface className="glass-layer" width="100%" height="100%" borderRadius={999} backgroundOpacity={0.55} saturation={1.15} distortionScale={-28} greenOffset={2} blueOffset={4} />
         <a
-          href="#home"
+          href={homeLinks ? "/#home" : "#home"}
           className="wordmark"
           aria-label="Asarya — Home"
           onClick={() => setMenu(false)}
@@ -181,12 +200,12 @@ export function Header() {
           ].map(([id, name]) => (
             <a
               key={id}
-              href={`#${id}`}
-              className={active === id ? "active" : ""}
-              aria-current={active === id ? "location" : undefined}
+              href={`${homeLinks ? "/" : ""}#${id}`}
+              className={!homeLinks && active === id ? "active" : ""}
+              aria-current={!homeLinks && active === id ? "location" : undefined}
               onClick={() => setMenu(false)}
             >
-              {active === id && (
+              {!homeLinks && active === id && (
                 <motion.span
                   className="nav-selection"
                   layoutId="nav-selection"
@@ -236,7 +255,7 @@ export function Header() {
     </header>
   );
 }
-export function Hero() {
+export function Hero({ availability }: { availability: "open_to_work" | "hired" }) {
   const { t } = useCopy();
   return (
     <section
@@ -251,7 +270,7 @@ export function Hero() {
         <span className="eyebrow"></span>
         <span className="availability">
           <i />
-          Open to work
+          {availability === "hired" ? t("Sudah bekerja", "Hired") : t("Terbuka untuk kerja", "Open to work")}
         </span>
       </div>
       <div className="name-marquee" aria-hidden="true">
@@ -405,7 +424,59 @@ export function About() {
 }
 export function Contact() {
   const { t } = useCopy();
-  const [status, setStatus] = useState("");
+  const [notice, setNotice] = useState<"none" | "challenge" | "sent" | "error">("none");
+  const [pending, setPending] = useState(false);
+  const [token, setToken] = useState("");
+  const widgetContainer = useRef<HTMLDivElement>(null);
+  const widgetId = useRef<string | null>(null);
+  useEffect(() => {
+    renderChallenge();
+    return () => {
+      if (widgetId.current) turnstile()?.remove(widgetId.current);
+      widgetId.current = null;
+    };
+  }, []);
+
+  function renderChallenge() {
+    if (!turnstileSiteKey || !widgetContainer.current || widgetId.current || !turnstile()) return;
+    widgetId.current = turnstile()!.render(widgetContainer.current, {
+      sitekey: turnstileSiteKey,
+      callback: setToken,
+      "expired-callback": () => setToken(""),
+      "error-callback": () => { setToken(""); setNotice("challenge"); },
+    });
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (pending) return;
+    if (!token) { setNotice("challenge"); return; }
+    const form = event.currentTarget;
+    const fields = new FormData(form);
+    setPending(true);
+    setNotice("none");
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: fields.get("name"),
+          email: fields.get("email"),
+          message: fields.get("message"),
+          turnstileToken: token,
+        }),
+      });
+      if (!response.ok) throw new Error("Contact request failed");
+      form.reset();
+      setNotice("sent");
+    } catch {
+      setNotice("error");
+    } finally {
+      setPending(false);
+      setToken("");
+      if (widgetId.current) turnstile()?.reset(widgetId.current);
+    }
+  }
   return (
     <section id="contact" className="contact section container">
       <div className="contact-pixel" aria-hidden="true"><PixelBlast /></div>
@@ -429,18 +500,7 @@ export function Contact() {
           <IconArrowUpRight size={18} />
         </a>
       </Reveal>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          setStatus(
-            t(
-              "Formulir ini masih pratinjau. Pesan belum dikirim. Kamu dapat menghubungi saya melalui GitHub.",
-              "This form is a preview. Your message has not been sent. You can find me on GitHub.",
-            ),
-          );
-        }}
-        className="contact-form"
-      >
+      <form onSubmit={submit} className="contact-form">
         <label>
           {t("Nama", "Name")}
           <input
@@ -448,6 +508,7 @@ export function Contact() {
             autoComplete="name"
             placeholder="John Doe"
             required
+            minLength={2}
             maxLength={100}
           />
         </label>
@@ -471,33 +532,42 @@ export function Contact() {
               "Hi Asarya, I’d like to discuss a website project...",
             )}
             required
+            minLength={10}
             maxLength={3000}
             rows={4}
           />
         </label>
+        {turnstileSiteKey ? (
+          <>
+            <div ref={widgetContainer} className="turnstile-widget" aria-label={t("Verifikasi keamanan", "Security verification")} />
+            <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" onReady={renderChallenge} onError={() => setNotice("challenge")} />
+          </>
+        ) : <p className="form-status">{t("Formulir belum dikonfigurasi. Hubungi pemilik situs.", "The form is not configured. Please contact the site owner.")}</p>}
         <div className="form-bottom">
-          <button type="submit" className="pill primary">
-            {t("Kirim pesan", "Send message")}
+          <button type="submit" className="pill primary" disabled={pending || !turnstileSiteKey}>
+            {pending ? t("Mengirim...", "Sending...") : t("Kirim pesan", "Send message")}
             <IconMail size={18} />
           </button>
-          <span>{t("Formulir pratinjau", "Preview form")}</span>
+          <span>{t("Dilindungi verifikasi keamanan", "Protected by security verification")}</span>
         </div>
-        <p role="status" className="form-status">
-          {status}
+        <p role={notice === "error" || notice === "challenge" ? "alert" : "status"} className="form-status">
+          {notice === "challenge" ? t("Selesaikan verifikasi keamanan terlebih dahulu.", "Complete the security check first.") :
+            notice === "sent" ? t("Pesan berhasil diterima. Terima kasih!", "Message received. Thank you!") :
+              notice === "error" ? t("Pesan gagal dikirim. Coba lagi sebentar lagi.", "Message could not be sent. Please try again.") : ""}
         </p>
       </form>
     </section>
   );
 }
-export function Footer() {
+export function Footer({ homeLinks = false }: { homeLinks?: boolean }) {
   const { t } = useCopy();
   return (
     <footer className="footer container">
-      <a className="wordmark" href="#home">
+      <a className="wordmark" href={homeLinks ? "/#home" : "#home"}>
         Asarya
       </a>
       <p>© {new Date().getFullYear()} Asarya Jachred Alotia</p>
-      <a href="#home" className="text-link">
+      <a href={homeLinks ? "#project-content" : "#home"} className="text-link">
         {t("Kembali ke atas", "Back to top")}
         <IconArrowUp size={17} />
       </a>

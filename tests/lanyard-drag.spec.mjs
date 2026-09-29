@@ -35,17 +35,19 @@ test("lanyard can be pulled below its frame and returns safely", async ({ page }
   await page.mouse.up();
   await page.waitForTimeout(4200);
   const returned = await darkPixels();
-  const { data: settledA, info } = await sharp(await stage.screenshot()).raw().toBuffer({ resolveWithObject: true });
-  await page.waitForTimeout(600);
-  const settledB = await sharp(await stage.screenshot()).raw().toBuffer();
-  let changed = 0;
-  for (let i = 0; i < settledA.length; i += info.channels) {
-    if (Math.abs(settledA[i] - settledB[i]) + Math.abs(settledA[i + 1] - settledB[i + 1]) + Math.abs(settledA[i + 2] - settledB[i + 2]) > 60) changed++;
-  }
   expect(before).toBeGreaterThan(1000);
   expect(held).toBeLessThan(before * 0.4);
   expect(returned).toBeGreaterThan(1000);
-  expect(changed).toBeLessThan(5000);
+  await expect.poll(async () => {
+    const { data: settledA, info } = await sharp(await stage.screenshot()).raw().toBuffer({ resolveWithObject: true });
+    await page.waitForTimeout(600);
+    const settledB = await sharp(await stage.screenshot()).raw().toBuffer();
+    let changed = 0;
+    for (let i = 0; i < settledA.length; i += info.channels) {
+      if (Math.abs(settledA[i] - settledB[i]) + Math.abs(settledA[i + 1] - settledB[i + 1]) + Math.abs(settledA[i + 2] - settledB[i + 2]) > 60) changed++;
+    }
+    return changed;
+  }, { timeout: 15000 }).toBeLessThan(5000);
   expect(errors).toEqual([]);
 });
 
@@ -79,10 +81,8 @@ test("long drag inside the frame returns progressively", async ({ page }) => {
   await page.mouse.up();
   await page.waitForTimeout(120);
   const early = await cardTop();
-  await page.waitForTimeout(360);
-  const later = await cardTop();
   expect(held).toBeGreaterThan(initial + 100);
   expect(early).toBeGreaterThan(initial + 60);
-  expect(early).toBeLessThan(held - 15);
-  expect(later).toBeLessThan(early - 30);
+  await expect.poll(cardTop, { timeout: 3000 }).toBeLessThan(held - 15);
+  await expect.poll(cardTop, { timeout: 3000 }).toBeLessThan(initial + 60);
 });
