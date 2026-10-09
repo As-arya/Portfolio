@@ -11,6 +11,7 @@ export default function RecoveryPage() {
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [resetLink, setResetLink] = useState("");
   useEffect(() => {
     fetch("/api/admin/session").then(async (response) => {
       if (!response.ok) { router.replace("/admin/login"); return; }
@@ -19,12 +20,14 @@ export default function RecoveryPage() {
       else setReady(true);
     }).catch(() => router.replace("/admin/login"));
   }, [router]);
-  async function sendReset() {
+  async function createReset() {
     setBusy(true); setMessage("");
     try {
       const response = await fetch("/api/admin/recovery", { method: "POST" });
-      if (!response.ok) throw new Error(response.status === 429 ? "Tunggu 15 menit sebelum meminta ulang." : "Tautan tidak dapat dikirim.");
-      setMessage("Tautan reset akun utama telah dikirim ke email cadangan.");
+      const body = await response.json() as { resetLink?: string; error?: string };
+      if (!response.ok || !body.resetLink) throw new Error(body.error || "Tautan reset tidak dapat dibuat.");
+      setResetLink(body.resetLink);
+      setMessage("Tautan reset siap. Buka tombol di bawah untuk mengganti kata sandi akun utama.");
     } catch (cause) { setMessage(cause instanceof Error ? cause.message : "Permintaan gagal."); }
     finally { setBusy(false); }
   }
@@ -37,9 +40,10 @@ export default function RecoveryPage() {
   return <main className="admin-auth"><div className="admin-auth-card">
     <p className="admin-kicker">BACKUP ACCESS</p>
     <h1>Pulihkan akun utama.</h1>
-    <p className="admin-muted">Akun cadangan hanya dapat meminta tautan reset. Tautan dikirim ke email cadangan yang terdaftar.</p>
-    <button className="admin-button primary wide" disabled={!ready || busy} onClick={() => void sendReset()}>{busy ? "Mengirim…" : "Kirim tautan reset"}</button>
+    <p className="admin-muted">Akun cadangan hanya dapat membuat tautan reset akun utama. Tautan ditampilkan di halaman ini setelah dibuat.</p>
+    <button className="admin-button primary wide" disabled={!ready || busy || !!resetLink} onClick={() => void createReset()}>{busy ? "Membuat tautan…" : "Buat tautan reset"}</button>
     {message && <p className="admin-notice" role="status">{message}</p>}
+    {resetLink && <a className="admin-button primary wide" href={resetLink} target="_blank" rel="noreferrer">Reset kata sandi akun utama ↗</a>}
     <div className="admin-auth-links"><button type="button" onClick={() => void logout()}>Keluar</button><Link href="/">Portofolio</Link></div>
   </div></main>;
 }

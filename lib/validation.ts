@@ -117,9 +117,21 @@ export function validateEducation(value: unknown): EducationRecord[] {
     const validatedLogo = !logo ? null : sampleLogo && logo.url === sampleLogo.url
       ? { ...sampleLogo, altId: text(logo.altId, "Alt Indonesia", 250), altEn: text(logo.altEn, "Alt English", 250) }
       : media(logo);
+    let logoDisplay: EducationRecord["logoDisplay"];
+    if (source.logoDisplay !== undefined) {
+      const display = object(source.logoDisplay);
+      const percent = (value: unknown, field: string, min: number) => {
+        if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > 100) {
+          throw new HttpError(400, `${field} harus antara ${min} dan 100.`);
+        }
+        return value;
+      };
+      logoDisplay = { scale: percent(display.scale, "Ukuran logo", 40), x: percent(display.x, "Posisi horizontal", 0), y: percent(display.y, "Posisi vertikal", 0) };
+    }
     return {
       id, institution: text(source.institution, "Institusi", 200, 1), startYear, endYear,
       logo: validatedLogo,
+      ...(validatedLogo && logoDisplay ? { logoDisplay } : {}),
       translations: { id: translation(translations.id, "Indonesia"), en: translation(translations.en, "English") },
     };
   });

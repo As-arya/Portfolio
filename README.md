@@ -2,6 +2,8 @@
 
 Portofolio Next.js untuk Asarya Jachred Alotia dengan pilihan tema terang/gelap, bahasa Indonesia/Inggris, detail proyek, dan admin pribadi. Backend memakai Firebase, Cloudinary, Gmail, dan Turnstile. Panduan pengisian setiap variabel ENV ada di [`docs/ENV_SETUP.md`](docs/ENV_SETUP.md); panduan menjalankan backend ada di [`docs/LOCAL_SETUP.md`](docs/LOCAL_SETUP.md).
 
+Langkah menghubungkan Gmail untuk notifikasi Contact tersedia di [`docs/GMAIL_SETUP.md`](docs/GMAIL_SETUP.md), termasuk pembuatan App Password, konfigurasi ENV, pengujian, dan perbedaannya dengan email reset Firebase.
+
 ## Menjalankan secara lokal
 
 Gunakan Node.js 24 dan npm. Dari folder `Portfolio`:
@@ -26,6 +28,7 @@ Cek regresi penentuan section navbar dengan `node tests/navigation.test.mjs` (No
 
 - Ubah tautan sosial dan daftar teknologi di [`app/data.ts`](app/data.ts). Tiga entri proyek di berkas itu adalah contoh yang dapat disalin sekali ke Firestore dengan `npm run seed`.
 - Setelah Firebase dikonfigurasi, kelola proyek, foto, isi dua bahasa, dan status kerja dari `/admin/login`.
+- Akun primary dan backup masuk melalui formulir email/kata sandi yang sama. Primary mengelola konten; backup hanya membuka pemulihan akun utama. Di halaman backup, buat tautan lalu buka tombol reset langsung tanpa Gmail. Gmail di ENV hanya diperlukan jika ingin notifikasi Contact melalui email.
 - Kelola sekolah/universitas dari tab **Education** di admin: institusi, logo opsional, program Indonesia/English, tahun mulai–selesai atau **Sekarang**, deskripsi, serta mata pelajaran/mata kuliah opsional. Judul bagian materi dapat diubah per bahasa. Logo memakai upload JPEG/PNG/WebP maksimal 10 MB. Urutan dapat diubah; simpan untuk menampilkan perubahan di situs.
 - Bagian **Certificates** pada halaman utama (`/#certificates`) menampilkan gambar sertifikat yang dapat diperbesar, judul, dan deskripsi. Kelola dari tab **Certificates** di admin, termasuk upload JPEG/PNG/WebP maksimal 10 MB, isi dua bahasa, urutan, dan hapus.
 - Data contoh Education dan Certificates tersedia di `app/sample-content.ts`; gambar sertifikat contoh ada di `public/certificates/`. Data contoh muncul ketika field konten belum dibuat, sehingga tampilan dapat dilihat tanpa seed atau menimpa data yang sudah ada. Ganti melalui admin lalu simpan. Menghapus semua entri dan menyimpan membuat halaman kosong; contoh tidak muncul kembali.

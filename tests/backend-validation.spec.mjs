@@ -75,6 +75,18 @@ test("sample education and certificates are valid editable records", () => {
   expect(validateCertificates([custom])[0].image.publicId).toBe("portfolio/certificate");
 });
 
+test("education logo display survives validation and rejects unsafe ranges", () => {
+  const entry = { ...sampleEducation[0], logoDisplay: { scale: 75, x: 0, y: 100 } };
+  expect(validateEducation([entry])[0].logoDisplay).toEqual(entry.logoDisplay);
+  expect(validateEducation([{ ...entry, logo: null }])[0].logoDisplay).toBeUndefined();
+  for (const logoDisplay of [
+    null, { scale: 39, x: 50, y: 50 }, { scale: 101, x: 50, y: 50 },
+    { scale: 75, x: -1, y: 50 }, { scale: 75, x: 50, y: 101 },
+    { scale: "75", x: 50, y: 50 }, { scale: NaN, x: 50, y: 50 },
+    { scale: 75, x: Infinity, y: 50 }, { scale: 75, x: 50 },
+  ]) expect(() => validateEducation([{ ...entry, logoDisplay }])).toThrow();
+});
+
 test("certificate input requires titles and a trusted image", () => {
   const sample = sampleCertificates[0];
   for (const invalid of [
@@ -95,7 +107,7 @@ test("contact input rejects invalid trust-boundary values", () => {
   expect(() => validateContact({ name: "Ada\nBcc: victim@example.com", email: "ada@example.com", message: "Hello there!", turnstileToken: "token" })).toThrow();
 });
 
-test("backup Google account cannot gain primary permissions", () => {
+test("only the two configured password accounts receive their assigned roles", () => {
   const previous = {
     PRIMARY_ADMIN_UID: process.env.PRIMARY_ADMIN_UID,
     PRIMARY_ADMIN_EMAIL: process.env.PRIMARY_ADMIN_EMAIL,
@@ -107,10 +119,15 @@ test("backup Google account cannot gain primary permissions", () => {
     process.env.PRIMARY_ADMIN_EMAIL = "primary@example.com";
     process.env.BACKUP_ADMIN_UID = "backup-uid";
     process.env.BACKUP_ADMIN_EMAIL = "backup@example.com";
-    expect(roleForUser("primary-uid", "primary@example.com", "password", false)).toBe("primary");
-    expect(roleForUser("backup-uid", "backup@example.com", "google.com", true)).toBe("recovery");
-    expect(roleForUser("backup-uid", "backup@example.com", "password", true)).toBeNull();
-    expect(roleForUser("primary-uid", "backup@example.com", "password", true)).toBeNull();
+    expect(roleForUser("primary-uid", "PRIMARY@example.com", "password")).toBe("primary");
+    expect(roleForUser("backup-uid", "BACKUP@example.com", "password")).toBe("recovery");
+    expect(roleForUser("backup-uid", "backup@example.com", "google.com")).toBeNull();
+    expect(roleForUser("primary-uid", "primary@example.com", "google.com")).toBeNull();
+    expect(roleForUser("primary-uid", "backup@example.com", "password")).toBeNull();
+    expect(roleForUser("backup-uid", "primary@example.com", "password")).toBeNull();
+    expect(roleForUser("other-uid", "primary@example.com", "password")).toBeNull();
+    expect(roleForUser("primary-uid", undefined, "password")).toBeNull();
+    expect(roleForUser("primary-uid", "primary@example.com", "custom")).toBeNull();
   } finally {
     for (const [key, value] of Object.entries(previous)) {
       if (value === undefined) delete process.env[key]; else process.env[key] = value;

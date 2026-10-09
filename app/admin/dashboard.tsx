@@ -10,6 +10,7 @@ import { skills } from "../data";
 import StackTags, { TechnologyIcon } from "../project-stack";
 import { api, uploadImage } from "./api";
 import CertificateEditor from "./certificate-editor";
+import EducationLogo from "../education-logo";
 
 type Tab = "overview" | "projects" | "education" | "certificates" | "contacts";
 type Language = "id" | "en";
@@ -246,7 +247,7 @@ function EducationEditor({ initial, onSaved, onBusy }: { initial: EducationRecor
     try {
       const logo = await uploadImage(file);
       uploaded.current.add(logo.publicId);
-      change(index, { logo });
+      change(index, { logo, logoDisplay: { scale: 100, x: 50, y: 50 } });
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Logo gagal diunggah."); }
     finally { working(false); }
   }
@@ -276,11 +277,20 @@ function EducationEditor({ initial, onSaved, onBusy }: { initial: EducationRecor
           <div className="admin-form">
             <label>Institusi<input maxLength={200} value={entry.institution} onChange={event => change(index, { institution: event.target.value })} placeholder="Nama sekolah atau universitas" /></label>
             <div className="admin-education-logo">
-              {entry.logo && <img src={entry.logo.url} alt={(lang === "id" ? entry.logo.altId : entry.logo.altEn) || entry.institution} />}
+              <EducationLogo entry={entry} lang={lang} />
               <label className="admin-upload">{entry.logo ? "Ganti logo institusi" : "Unggah logo institusi"}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void uploadLogo(event, index)} /></label>
-              {entry.logo && <button className="admin-button subtle" onClick={() => change(index, { logo: null })}>Hapus logo</button>}
+              {entry.logo && <button className="admin-button subtle" onClick={() => change(index, { logo: null, logoDisplay: undefined })}>Hapus logo</button>}
               <p className="admin-muted">Logo opsional · JPEG, PNG, atau WebP · maksimal 10 MB.</p>
             </div>
+            {entry.logo && <div className="admin-logo-adjustment">
+              <p className="admin-muted">Sesuaikan tampilan logo. Ukuran dipaskan agar seluruh gambar terlihat; perkecil untuk memberi ruang di tepi. Pratinjau mengikuti tampilan situs.</p>
+              <div className="admin-logo-sliders">{([
+                ["scale", "Ukuran logo", 40, 100], ["x", "Posisi horizontal", 0, 50], ["y", "Posisi vertikal", 0, 50],
+              ] as const).map(([key, label, min, fallback]) => <label key={key} htmlFor={`logo-${entry.id}-${key}`}>{label} <output>{entry.logoDisplay?.[key] ?? fallback}%</output>
+                <input id={`logo-${entry.id}-${key}`} type="range" min={min} max={100} step={1} value={entry.logoDisplay?.[key] ?? fallback} onChange={event => change(index, { logoDisplay: { scale: 100, x: 50, y: 50, ...entry.logoDisplay, [key]: Number(event.target.value) } })} />
+              </label>)}</div>
+              <button className="admin-button subtle" onClick={() => change(index, { logoDisplay: { scale: 100, x: 50, y: 50 } })}>Reset tampilan logo</button>
+            </div>}
             {entry.logo && <label>Teks alternatif logo ({lang === "id" ? "Indonesia" : "English"})<input maxLength={250} value={(lang === "id" ? entry.logo.altId : entry.logo.altEn) || ""} onChange={event => change(index, { logo: { ...entry.logo!, [lang === "id" ? "altId" : "altEn"]: event.target.value } })} /></label>}
             <div className="admin-form two"><label>Tahun mulai<input type="number" min={1900} max={2100} value={entry.startYear || ""} onChange={event => change(index, { startYear: Number(event.target.value) })} /></label><label>Tahun selesai<input type="number" min={entry.startYear || 1900} max={2100} disabled={entry.endYear === null} value={entry.endYear || ""} onChange={event => change(index, { endYear: Number(event.target.value) })} /></label></div>
             <label className="admin-checkbox"><input type="checkbox" checked={entry.endYear === null} onChange={event => change(index, { endYear: event.target.checked ? null : Math.max(entry.startYear, new Date().getFullYear()) })} />Masih berjalan (Sekarang / Present)</label>

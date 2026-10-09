@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
     <Link className="admin-back" href="/admin/login">← Kembali ke login</Link>
     <p className="admin-kicker">ACCOUNT RECOVERY</p>
     <h1>Reset kata sandi.</h1>
-    <p className="admin-muted">Tautan reset akan dikirim ke email admin utama. Jika email utama tidak dapat diakses, gunakan akun Google cadangan dari halaman login.</p>
+    <p className="admin-muted">Tautan reset akan dikirim ke email admin utama. Jika email utama tidak dapat diakses, masuk dengan email dan kata sandi akun cadangan dari halaman login.</p>
     <form onSubmit={(event) => void reset(event)}><button className="admin-button primary wide" disabled={busy}>{busy ? "Mengirim…" : "Kirim tautan reset"}</button></form>
     {message && <p className="admin-notice" role="status">{message}</p>}
   </div></main>;

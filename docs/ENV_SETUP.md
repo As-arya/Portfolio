@@ -1,6 +1,6 @@
 # Langkah melengkapi ENV
 
-Gunakan `Portfolio/.env.local` untuk mengaktifkan admin, penyimpanan konten, upload, Contact, dan pemulihan akun. Semua nama variabel berikut sesuai dengan kode aplikasi. Siapkan dua akun Google berbeda: akun utama untuk admin/penerima Contact, dan akun cadangan untuk pemulihan/pengirim email.
+Gunakan `Portfolio/.env.local` untuk mengaktifkan admin, penyimpanan konten, upload, Contact, dan pemulihan akun. Semua nama variabel berikut sesuai dengan kode aplikasi. Gunakan dua akun Firebase Email/Password: akun utama untuk admin dan akun cadangan untuk pemulihan. Gmail pengirim diatur terpisah dari metode login admin.
 
 ## 1. Siapkan berkas lokal
 
@@ -24,7 +24,7 @@ Variabel `NEXT_PUBLIC_` bisa dibaca browser. Private key, Cloudinary API secret,
 Di [Firebase Console](https://console.firebase.google.com/), pilih atau buat project, lalu:
 
 1. Di **Project settings > General > Your apps**, tambahkan aplikasi Web bila belum ada dan tampilkan konfigurasi SDK.
-2. Di **Authentication > Sign-in method**, aktifkan **Email/Password** dan **Google**; isi email dukungan project untuk Google bila diminta.
+2. Di **Authentication > Sign-in method**, aktifkan **Email/Password**. Login Google tidak digunakan aplikasi.
 3. Di **Authentication > Settings > Authorized domains**, tambahkan `localhost` dan `127.0.0.1`, tanpa protokol atau port. Tambahkan domain situs saat publikasi. Project baru mungkin belum mengizinkan localhost otomatis. [Pengaturan domain Firebase](https://firebase.google.com/docs/auth/faq-and-troubleshooting)
 4. Di **Firestore Database**, buat database default `(default)`. Salin [`firestore.rules`](../firestore.rules) ke tab **Rules**, lalu publish. Aplikasi mengakses Firestore melalui backend Admin SDK.
 5. Di **Project settings > Service accounts > Firebase Admin SDK**, pilih **Generate new private key** dan simpan JSON secara privat. [Panduan Admin SDK](https://firebase.google.com/docs/admin/setup)
@@ -45,7 +45,7 @@ Kedua Project ID harus sama. `FIREBASE_CLIENT_EMAIL` adalah alamat service accou
 
 ## 3. Admin utama
 
-1. Di **Authentication > Users > Add user**, buat akun Email/Password menggunakan Gmail utama dan kata sandi pilihan Anda.
+1. Di **Authentication > Users**, gunakan akun Email/Password utama yang sudah ada. Jika belum ada, buat melalui **Add user**.
 2. Salin **User UID** akun tersebut, lalu isi:
 
 | Variabel ENV | Isi |
@@ -58,14 +58,14 @@ Kedua Project ID harus sama. `FIREBASE_CLIENT_EMAIL` adalah alamat service accou
 
 UID bukan email atau Project ID. Kata sandi login admin tidak dimasukkan ke ENV. Email utama juga dipakai sebagai penerima Contact dan alamat reset sandi.
 
-## 4. Akun Google cadangan
+## 4. Akun cadangan Email/Password
 
-1. Setelah Firebase Web/Admin dan provider Google siap, buka `/admin/login` dan pilih **Masuk dengan akun Google cadangan**.
-2. Login memakai Gmail cadangan. Sebelum UID diizinkan, aplikasi dapat menampilkan **Akun ini tidak memiliki akses**, tetapi pengguna Firebase sudah dibuat oleh login Google.
-3. Cari pengguna baru di **Authentication > Users**, salin UID, dan isi `BACKUP_ADMIN_UID` serta `BACKUP_ADMIN_EMAIL`.
-4. Mulai ulang server dan ulangi login Google. Akun cadangan membuka `/admin/recovery`; pengelolaan konten memakai akun utama.
+1. Di **Authentication > Users**, gunakan akun Email/Password cadangan yang sudah ada. Akun utama dan cadangan harus berbeda.
+2. Salin UID dan email akun tersebut ke `BACKUP_ADMIN_UID` dan `BACKUP_ADMIN_EMAIL`. Kata sandi Firebase tidak dimasukkan ke ENV.
+3. Mulai ulang server, buka `/admin/login`, dan masukkan email serta kata sandi cadangan melalui formulir yang sama.
+4. Akun cadangan membuka `/admin/recovery`. Pilih **Buat tautan reset**, lalu **Reset kata sandi akun utama** untuk membuka formulir Firebase. Tautan tampil langsung tanpa email/Gmail. Pengelolaan konten tetap memakai akun utama.
 
-Jika muncul `auth/unauthorized-domain`, cek Authorized domains. Jika `auth/operation-not-allowed`, aktifkan provider Google. Jika pengguna tidak terbentuk, selesaikan error Firebase terlebih dahulu. [Panduan Google sign-in](https://firebase.google.com/docs/auth/web/google-signin)
+Jika muncul `auth/operation-not-allowed`, aktifkan provider Email/Password. Jika akun lama hanya memiliki provider Google, tambahkan metode Email/Password pada akun yang sama sebelum menggunakannya; pertahankan UID yang tercantum di ENV. [Panduan Email/Password](https://firebase.google.com/docs/auth/web/password-auth)
 
 ## 5. Cloudinary untuk upload gambar
 
@@ -84,16 +84,18 @@ Aplikasi memeriksa format dan batas 10 MB pada file serta permintaan tanda tanga
 
 Mulai ulang server, lalu coba upload logo di **Education** atau gambar di **Certificates** melalui admin utama.
 
-## 6. Gmail pengirim
+## 6. Gmail pengirim Contact (opsional)
 
-1. Pada akun Google cadangan, aktifkan **Verifikasi 2 Langkah**.
+Untuk langkah lengkap dari pengaturan akun Google sampai uji notifikasi, ikuti [panduan menghubungkan Gmail](GMAIL_SETUP.md).
+
+1. Pada akun Gmail yang akan mengirim notifikasi Contact, aktifkan **Verifikasi 2 Langkah**.
 2. Buka [App Passwords](https://myaccount.google.com/apppasswords), lalu buat sandi aplikasi untuk portofolio.
-3. Isi `BACKUP_GMAIL_ADDRESS` dengan Gmail yang membuat App Password; untuk konfigurasi ini, gunakan alamat yang sama dengan `BACKUP_ADMIN_EMAIL`.
+3. Isi `BACKUP_GMAIL_ADDRESS` dengan Gmail yang membuat App Password. Akun Gmail ini hanya untuk notifikasi Contact dan dapat memakai Gmail cadangan yang sudah ada.
 4. Isi `BACKUP_GMAIL_APP_PASSWORD` dengan App Password 16 karakter tanpa spasi pemisah, bukan kata sandi login Gmail.
 
 Menu App Password dapat tidak tersedia pada akun organisasi, Advanced Protection, atau konfigurasi Verifikasi 2 Langkah tertentu. [Bantuan resmi Google](https://support.google.com/accounts/answer/185833?hl=en)
 
-Backend memakai Gmail ini sebagai pengirim: Contact dikirim ke `PRIMARY_ADMIN_EMAIL`, pemulihan ke `BACKUP_ADMIN_EMAIL`. Mulai ulang server setelah mengisi keduanya.
+Backend memakai Gmail ini untuk mengirim notifikasi Contact ke `PRIMARY_ADMIN_EMAIL`. Tanpa kedua nilai tersebut, pesan Contact tetap tersimpan di admin dengan status email gagal. Pemulihan akun backup tidak memakai SMTP. Mulai ulang server setelah mengisi keduanya.
 
 ## 7. Turnstile
 
@@ -114,7 +116,7 @@ Jalankan `npm run check` dan `npm run build`, kemudian `npm run dev`. Buka alama
 - **Education:** ubah **Judul bagian materi (Indonesia)**, beralih ke **English** untuk mengubah judul Inggris, lalu klik **Simpan pendidikan**. Muat ulang situs dan cek kedua bahasa. Judul kosong memakai teks bawaan; judul tampil jika daftar materi berisi entri.
 - **Upload:** unggah logo atau sertifikat, simpan, dan cek gambar pada situs.
 - **Contact:** kirim pesan uji setelah widget siap. Cek pesan di admin dan notifikasi di Gmail utama. Jika status email gagal, perbaiki Gmail lalu gunakan **Kirim ulang email**.
-- **Cadangan:** login Google membuka halaman pemulihan. Tautan reset hanya dikirim ketika tombol pemulihan ditekan.
+- **Cadangan:** login email dan kata sandi membuka halaman pemulihan. Tautan dibuat saat tombol ditekan dan ditampilkan langsung; akun ini tidak dapat mengakses konten admin. Selama 15 menit, tombol mengambil tautan yang sama setelah halaman dimuat ulang; setelah itu tautan baru dapat dibuat.
 
 `npm run seed` bersifat opsional untuk menyalin tiga proyek contoh ke Firestore. Jalankan sekali setelah Firebase siap; perintah ini menulis ke project yang dipilih dan hanya membuat proyek yang belum ada. Education dan Certificates memiliki contoh yang bisa diganti dari admin tanpa seed.
 

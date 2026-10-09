@@ -6,7 +6,6 @@
 .education-row article { display: grid; grid-template-columns: minmax(160px, .6fr) minmax(0, 2fr); gap: 48px; padding: 40px 0; }
 .education-row article:has(.education-logo) { grid-template-columns: minmax(120px, .6fr) 128px minmax(0, 2fr); gap: 32px; }
 .education-years { padding-top: 8px; font: 12px/1.7 var(--font-mono), monospace; color: var(--muted); }
-.education-logo { display: block; width: 128px; height: 128px; object-fit: contain; }
 .education-coursework h4 { overflow-wrap: anywhere; }
 .education-now { color: var(--accent); }
 .education-copy h3 { font-size: clamp(24px, 3vw, 36px); font-weight: 550; letter-spacing: -.045em; overflow-wrap: anywhere; }
@@ -24,5 +23,4 @@
   .education-row article { grid-template-columns: 1fr; gap: 16px; padding: 30px 0; }
   .education-row article:has(.education-logo) { grid-template-columns: minmax(0, 1fr) 72px; gap: 16px; }
   .education-copy { grid-column: 1 / -1; }
-  .education-logo { width: 72px; height: 72px; }
 }

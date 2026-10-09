@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getClientAuth } from "../../../lib/firebase-client";
 
 export default function LoginPage() {
@@ -13,15 +13,13 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
-  async function signIn(kind: "password" | "google") {
+  async function signIn() {
     const auth = getClientAuth();
     if (!auth) { setError("Firebase belum dikonfigurasi. Isi .env.local lebih dulu."); return; }
     setBusy(true);
     setError("");
     try {
-      const credential = kind === "password"
-        ? await signInWithEmailAndPassword(auth, email.trim(), password)
-        : await signInWithPopup(auth, new GoogleAuthProvider());
+      const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const response = await fetch("/api/admin/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -45,15 +43,13 @@ export default function LoginPage() {
       <Link className="admin-back" href="/">← Kembali ke portofolio</Link>
       <p className="admin-kicker">PORTFOLIO CONTROL</p>
       <h1>Masuk ke admin.</h1>
-      <p className="admin-muted">Gunakan akun utama untuk mengelola portofolio.</p>
-      <form onSubmit={(event: FormEvent) => { event.preventDefault(); void signIn("password"); }} className="admin-form">
+      <p className="admin-muted">Masuk dengan email dan kata sandi akun utama atau cadangan. Akun cadangan hanya untuk pemulihan akun utama.</p>
+      <form onSubmit={(event: FormEvent) => { event.preventDefault(); void signIn(); }} className="admin-form">
         <label>Email<input type="email" autoComplete="username" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
         <label>Kata sandi<input type="password" autoComplete="current-password" required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
         <button className="admin-button primary" disabled={busy}>{busy ? "Memproses…" : "Masuk"}</button>
       </form>
       <div className="admin-auth-links"><Link href="/admin/forgot-password">Lupa kata sandi?</Link></div>
-      <div className="admin-divider"><span>Pemulihan cadangan</span></div>
-      <button className="admin-button subtle wide" type="button" onClick={() => void signIn("google")} disabled={busy}>Masuk dengan akun Google cadangan</button>
       {error && <p className="admin-error" role="alert">{error}</p>}
     </div>
   </main>;

@@ -3,6 +3,7 @@ import { Projects } from "./work";
 import Technology from "./technology";
 import Education from "./education";
 import Certificates from "./certificates/certificates";
+import GradientWaves from "./gradient-waves";
 import { getAvailability, getCertificates, getEducation, getPublishedProjects } from "../lib/repository";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,8 @@ export const dynamic = "force-dynamic";
 export default async function Page() {
   const [projects, availability, education, certificates] = await Promise.all([getPublishedProjects(), getAvailability(), getEducation(), getCertificates()]);
   return (
-    <>
+    <div className="portfolio-home">
+      <GradientWaves />
       <a className="skip-link" href="#about">
         Skip to content
       </a>
@@ -24,6 +26,6 @@ export default async function Page() {
         <Contact />
       </main>
       <Footer />
-    </>
+    </div>
   );
 }

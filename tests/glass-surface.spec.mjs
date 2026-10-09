@@ -16,7 +16,7 @@ test("responsive navigation, activity, and project reveal stay usable", async ({
   await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
 
   await expect(page.locator(".navbar .glass-surface")).toBeVisible();
-  await expect(page.locator(".hero-intro .glass-surface")).toBeVisible();
+  await expect(page.locator("#about .availability")).toBeVisible();
   await expect(page.getByRole("button", { name: /Jeda animasi|Pause animation/ })).toHaveCount(0);
   await expect.poll(() => page.locator(".navbar .glass-surface").evaluate((element) => getComputedStyle(element).backdropFilter)).toContain("url(");
   await page.getByRole("button", { name: /Menu navigasi|Navigation menu/ }).click();

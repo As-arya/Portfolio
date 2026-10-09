@@ -11,6 +11,7 @@ export type EducationRecord = {
   id: string;
   institution: string;
   logo?: Media | null;
+  logoDisplay?: { scale: number; x: number; y: number };
   startYear: number;
   endYear: number | null;
   translations: { id: EducationLocale; en: EducationLocale };

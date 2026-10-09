@@ -37,7 +37,7 @@ test("certificate samples render, enlarge, follow language and fit mobile", asyn
   await expect(page.locator(".education-now")).toHaveText("Present");
   await expect(page.locator(".education-coursework h4")).toHaveText("Selected Coursework");
   await expect(page.locator(".education-logo")).toHaveCount(2);
-  await expect.poll(() => page.locator(".education-logo").evaluateAll(images => images.every(image => image.naturalWidth > 0))).toBe(true);
+  await expect.poll(() => page.locator(".education-logo img").evaluateAll(images => images.every(image => image.naturalWidth > 0))).toBe(true);
   for (const width of [1380, 820, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const positions = await page.locator(".education-row article").first().evaluate(article => {
