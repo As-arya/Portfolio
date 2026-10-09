@@ -36,6 +36,7 @@ const PixelBlast = dynamic(() => import("./pixel-blast"), { ssr: false });
 type Turnstile = {
   render: (container: HTMLElement, options: {
     sitekey: string;
+    action: string;
     callback: (token: string) => void;
     "expired-callback": () => void;
     "error-callback": () => void;
@@ -344,7 +345,7 @@ export function About({ availability }: { availability: "open_to_work" | "hired"
         </p>
         <ScrollReveal
           text={t(
-            "Saya mahasiswa Computer Science di BINUS University dengan peminatan Software Engineering. Saya senang membangun aplikasi mobile dan website, mulai dari merancang antarmuka hingga menghubungkannya dengan backend dan data. Melalui beberapa proyek perkuliahan, saya mendapat pengalaman bekerja secara fullstack dan mengembangkan fitur yang berangkat dari kebutuhan pengguna. Saya ingin terus mengasah kemampuan tersebut dan berfokus pada aplikasi serta website yang berguna dan mudah digunakan.",
+            "Saya mahasiswa Computer Science di BINUS University dengan peminatan Software Engineering. Saya menikmati membangun aplikasi mobile dan website, mulai dari merancang antarmuka hingga menghubungkannya dengan backend dan database. Melalui beberapa proyek perkuliahan, saya mendapat pengalaman bekerja secara fullstack dan mengembangkan fitur yang sesuai kebutuhan pengguna. Saya ingin terus mengasah kemampuan tersebut dan berfokus pada aplikasi serta website yang berguna dan mudah digunakan.",
             "I study Computer Science at BINUS University with a focus on Software Engineering. I enjoy building mobile apps and websites, from designing interfaces to connecting them with backend services and data. Through university projects, I have gained fullstack experience and built features around users' needs. I want to keep improving those skills and focus on making apps and websites that are useful and easy to use.",
           )}
         />
@@ -371,7 +372,7 @@ export function About({ availability }: { availability: "open_to_work" | "hired"
     </section>
   );
 }
-export function Contact() {
+export function Contact({ nonce }: { nonce?: string }) {
   const { t } = useCopy();
   const [notice, setNotice] = useState<"none" | "challenge" | "sent" | "error">("none");
   const [pending, setPending] = useState(false);
@@ -390,6 +391,7 @@ export function Contact() {
     if (!turnstileSiteKey || !widgetContainer.current || widgetId.current || !turnstile()) return;
     widgetId.current = turnstile()!.render(widgetContainer.current, {
       sitekey: turnstileSiteKey,
+      action: "contact",
       callback: setToken,
       "expired-callback": () => setToken(""),
       "error-callback": () => { setToken(""); setNotice("challenge"); },
@@ -488,7 +490,7 @@ export function Contact() {
         {turnstileSiteKey ? (
           <>
             <div ref={widgetContainer} className="turnstile-widget" aria-label={t("Verifikasi keamanan", "Security verification")} />
-            <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" onReady={renderChallenge} onError={() => setNotice("challenge")} />
+            <Script nonce={nonce} src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" onReady={renderChallenge} onError={() => setNotice("challenge")} />
           </>
         ) : <p className="form-status">{t("Formulir belum dikonfigurasi. Hubungi pemilik situs.", "The form is not configured. Please contact the site owner.")}</p>}
         <div className="form-bottom">

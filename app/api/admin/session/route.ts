@@ -16,7 +16,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     sameOrigin(request);
-    const idToken = object(await jsonBody(request)).idToken;
+    const idToken = object(await jsonBody(request, 16_384)).idToken;
     if (typeof idToken !== "string" || idToken.length > 10000) throw new HttpError(400, "Token login tidak valid.");
     const role = await roleFromIdToken(idToken);
     const session = await auth().createSessionCookie(idToken, { expiresIn: SESSION_AGE_MS });

@@ -24,6 +24,7 @@ export async function uploadImage(file: File): Promise<Media> {
   form.set("asset_folder", signed.assetFolder);
   form.set("public_id_prefix", signed.publicIdPrefix);
   form.set("upload_preset", signed.uploadPreset);
+  form.set("allowed_formats", "jpg,png,webp");
   form.set("signature", signed.signature);
   const response = await fetch(`https://api.cloudinary.com/v1_1/${signed.cloudName}/image/upload`, { method: "POST", body: form });
   if (!response.ok) throw new Error("Foto gagal diunggah ke Cloudinary.");

@@ -5,10 +5,12 @@ import Education from "./education";
 import Certificates from "./certificates/certificates";
 import GradientWaves from "./gradient-waves";
 import { getAvailability, getCertificates, getEducation, getPublishedProjects } from "../lib/repository";
+import { headers } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
 export default async function Page() {
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
   const [projects, availability, education, certificates] = await Promise.all([getPublishedProjects(), getAvailability(), getEducation(), getCertificates()]);
   return (
     <div className="portfolio-home">
@@ -23,7 +25,7 @@ export default async function Page() {
         <Technology />
         <Projects projects={projects} />
         <Certificates entries={certificates} />
-        <Contact />
+        <Contact nonce={nonce} />
       </main>
       <Footer />
     </div>

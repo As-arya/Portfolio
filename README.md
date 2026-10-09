@@ -4,6 +4,8 @@ Portofolio Next.js untuk Asarya Jachred Alotia dengan pilihan tema terang/gelap,
 
 Langkah menghubungkan Gmail untuk notifikasi Contact tersedia di [`docs/GMAIL_SETUP.md`](docs/GMAIL_SETUP.md), termasuk pembuatan App Password, konfigurasi ENV, pengujian, dan perbedaannya dengan email reset Firebase.
 
+Folder repository yang diunggah adalah **Portfolio**, dengan `package.json` di root repository. Panduan pengunggahan dan file lokal yang dikecualikan tersedia di [`docs/GITHUB_UPLOAD.md`](docs/GITHUB_UPLOAD.md).
+
 ## Menjalankan secara lokal
 
 Gunakan Node.js 24 dan npm. Dari folder `Portfolio`:
@@ -19,6 +21,8 @@ Buka [http://localhost:3000](http://localhost:3000). Untuk memeriksa sebelum pub
 npm run check
 npm run build
 ```
+
+Audit keamanan dan record perbaikan ada di [`docs/SECURITY_AUDIT.md`](docs/SECURITY_AUDIT.md). Sebelum deploy publik, isi `APP_ORIGIN` dengan origin HTTPS domain final, ganti kedua kunci Turnstile tes dengan pasangan produksi, lalu jalankan `npm run check:deploy`, `npm audit`, dan `npm run test:security`. Tes HTTP keamanan pada server produksi/staging tersedia melalui `npm run test:security:http` (`PORTFOLIO_TEST_URL` menentukan target). Contact pada produksi menolak kunci CAPTCHA tes dan membatasi 3 pesan per email / 30 total per 15 menit.
 
 Cek regresi penentuan section navbar dengan `node tests/navigation.test.mjs` (Node.js 22.18+).
 

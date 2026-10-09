@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start --hostname 127.0.0.1",
     "check": "tsc --noEmit",
-    "seed": "node scripts/seed-projects.mjs"
+    "seed": "node scripts/seed-projects.mjs",
+    "test:security": "playwright test tests/security-unit.spec.mjs tests/backend-validation.spec.mjs tests/recovery.spec.mjs --workers=1",
+    "test:security:http": "playwright test tests/security-http.spec.mjs tests/admin-access.spec.mjs --workers=1",
+    "check:deploy": "node scripts/check-deploy.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
@@ -20,12 +23,17 @@
     "gsap": "^3.15.0",
     "meshline": "^3.3.1",
     "motion": "^13.4.4",
-    "next": "^16.3.6",
+    "next": "^16.3.8",
     "nodemailer": "^10.0.12",
     "ogl": "^1.0.11",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "three": "^0.186.1"
+  },
+  "overrides": {
+    "@firebase/firestore": {
+      "@grpc/grpc-js": "^1.14.5"
+    }
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

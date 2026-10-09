@@ -68,9 +68,9 @@ test("drag inside the frame stretches the band and returns", async ({ page }) =>
       for (let px = Math.floor(info.width / 2 - 75); px < info.width / 2 + 75; px++) {
         const i = (y * info.width + px) * info.channels;
         const [r, g, b] = [data[i], data[i + 1], data[i + 2]];
-        if (r > 95 && r < 225 && g > 95 && g < 225 && b > 95 && b < 225 && Math.abs(r - g) < 18 && Math.abs(g - b) < 18) count++;
+        if (r < 90 && g < 90 && b < 90) count++;
       }
-      if (count > 60) return y;
+      if (count > 100) return y;
     }
     return NaN;
   };

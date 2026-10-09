@@ -105,6 +105,10 @@ test("contact input rejects invalid trust-boundary values", () => {
   expect(validateContact({ name: "Ada", email: "ADA@example.com", message: "Hello there!", turnstileToken: "token" }).email).toBe("ada@example.com");
   expect(() => validateContact({ name: "A", email: "bad", message: "x", turnstileToken: "" })).toThrow();
   expect(() => validateContact({ name: "Ada\nBcc: victim@example.com", email: "ada@example.com", message: "Hello there!", turnstileToken: "token" })).toThrow();
+  for (const email of ["ada@example.com?bcc=victim%40evil.com", "ada@example.com#fragment", "Ada,<victim@example.com>", "ada..test@example.com", "ada@example..com", "ada@example.com\r\nBcc:victim@example.com"]) {
+    expect(() => validateContact({ name: "Ada", email, message: "Hello there!", turnstileToken: "token" })).toThrow();
+  }
+  expect(validateContact({ name: "Ada", email: "ada+portfolio@example.co.id", message: "Hello there!", turnstileToken: "token" }).email).toBe("ada+portfolio@example.co.id");
 });
 
 test("only the two configured password accounts receive their assigned roles", () => {

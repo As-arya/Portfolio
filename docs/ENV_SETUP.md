@@ -99,6 +99,8 @@ Backend memakai Gmail ini untuk mengirim notifikasi Contact ke `PRIMARY_ADMIN_EM
 
 ## 7. Turnstile
 
+Isi juga `APP_ORIGIN` dengan origin HTTPS kanonis domain deploy (contoh `https://portfolio.example`, tanpa path/query). Backend produksi memakai nilai ini untuk verifikasi Origin dan hostname CAPTCHA; ENV kosong/rusak akan menolak mutasi. Untuk `next dev`, nilai boleh dikosongkan; untuk pengujian `next start` lokal gunakan `http://127.0.0.1:3010`. Jalankan `npm run check:deploy` untuk memeriksa konfigurasi domain final.
+
 Untuk pengujian lokal, gunakan pasangan kunci tes resmi berikut:
 
 ```dotenv
@@ -107,6 +109,8 @@ TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 ```
 
 Kunci ini selalu lolos untuk pengujian. Saat publikasi, buat widget di Cloudflare Turnstile, daftarkan hostname situs, lalu ganti **kedua** nilai dengan Site Key dan Secret Key widget yang sama. Build ulang setelah mengganti Site Key. Jangan mencampur pasangan tes dan produksi. [Pengujian Turnstile](https://developers.cloudflare.com/turnstile/troubleshooting/testing/)
+
+Pasangan tes hanya diterima pada `next dev`. Runtime produksi (`next start`/hosting) menolaknya dengan 503 sebelum menyimpan Contact. Token produksi harus cocok dengan hostname APP_ORIGIN dan action `contact`. Pesan yang lolos dibatasi transaksi Firestore: 3 per email dan 30 total per 15 menit; aktifkan TTL field `expiresAt` pada collection group `security` untuk membersihkan marker lama.
 
 ## 8. Periksa hasilnya
 

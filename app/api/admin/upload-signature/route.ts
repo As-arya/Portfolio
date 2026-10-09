@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const timestamp = Math.floor(Date.now() / 1000);
     const assetFolder = "portfolio";
     const publicIdPrefix = "portfolio";
-    const signature = cloudinary.utils.api_sign_request({ timestamp, asset_folder: assetFolder, public_id_prefix: publicIdPrefix, upload_preset: uploadPreset }, apiSecret);
+    const signature = cloudinary.utils.api_sign_request({ timestamp, asset_folder: assetFolder, public_id_prefix: publicIdPrefix, upload_preset: uploadPreset, allowed_formats: "jpg,png,webp" }, apiSecret);
     return Response.json({ signature, timestamp, assetFolder, publicIdPrefix, uploadPreset, apiKey, cloudName, maxFileSize: MAX_IMAGE_BYTES, allowedFormats: ["jpg", "png", "webp"] });
   } catch (error) { return errorResponse(error); }
 }

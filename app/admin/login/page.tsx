@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { inMemoryPersistence, setPersistence, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { getClientAuth } from "../../../lib/firebase-client";
 
 export default function LoginPage() {
@@ -19,6 +19,7 @@ export default function LoginPage() {
     setBusy(true);
     setError("");
     try {
+      await setPersistence(auth, inMemoryPersistence);
       const credential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const response = await fetch("/api/admin/session", {
         method: "POST",
@@ -30,6 +31,7 @@ export default function LoginPage() {
         throw new Error(body.error || "Login admin gagal.");
       }
       const { role } = await response.json() as { role: "primary" | "recovery" };
+      await signOut(auth);
       router.replace(role === "primary" ? "/admin" : "/admin/recovery");
       router.refresh();
     } catch (cause) {

@@ -2,13 +2,9 @@ import { requirePrimary } from "../../../../../lib/auth";
 import { db } from "../../../../../lib/firebase-admin";
 import { errorResponse } from "../../../../../lib/http";
 import type { ContactRecord } from "../../../../../lib/models";
+import { cell } from "../../../../../lib/csv";
 
 export const runtime = "nodejs";
-
-function cell(value: string) {
-  const safe = /^[=+\-@]/.test(value) ? `'${value}` : value;
-  return `"${safe.replaceAll('"', '""')}"`;
-}
 
 export async function GET() {
   try {

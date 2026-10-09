@@ -1,5 +1,7 @@
 # Hasil pemeriksaan sebelum deploy
 
+> Pembaruan keamanan 10 Oktober 2026: lihat [SECURITY_AUDIT.md](SECURITY_AUDIT.md) untuk record terbaru, status perbaikan, dan syarat deploy yang belum selesai. Kunci Turnstile tes sekarang ditolak pada runtime produksi, dan APP_ORIGIN wajib untuk mutasi produksi. Hasil di bawah adalah pemeriksaan sebelumnya, sebelum perubahan keamanan ini.
+
 Pemeriksaan lokal pada 10 Oktober 2026. Konten awal dipulihkan; proyek, pesan Contact, dan empat aset Cloudinary sementara sudah dibersihkan. Tidak ada deploy atau perubahan kata sandi.
 
 ## Perubahan akun

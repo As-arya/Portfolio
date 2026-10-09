@@ -142,14 +142,15 @@ export function validateEducation(value: unknown): EducationRecord[] {
 export function validateContact(value: unknown) {
   const source = object(value);
   const email = text(source.email, "Email", 254, 3).toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new HttpError(400, "Email tidak valid.");
+  const address = email.split("@")[0];
+  if (!/^[a-z0-9_%+-][a-z0-9._%+-]*@[a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)+$/.test(email) || address.length > 64 || address.endsWith(".") || address.includes("..")) throw new HttpError(400, "Email tidak valid.");
   const name = text(source.name, "Nama", 100, 2);
   if (/[\u0000-\u001f\u007f]/.test(name)) throw new HttpError(400, "Nama tidak valid.");
   return {
     name,
     email,
     message: text(source.message, "Pesan", 5000, 10),
-    turnstileToken: text(source.turnstileToken, "Verifikasi keamanan", 4096, 1),
+    turnstileToken: text(source.turnstileToken, "Verifikasi keamanan", 2048, 1),
   };
 }
 

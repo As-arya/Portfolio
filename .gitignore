@@ -1,15 +1,41 @@
+# Dependencies and generated output
 node_modules/
 .next/
 .npm-cache/
+out/
+coverage/
+.cache/
+*.tsbuildinfo
+
+# Local test results and working files
 test-results/
 playwright-report/
 .temp/
-out/
-*.tsbuildinfo
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+*.orig
+*~
+
+# Credentials: only the empty ENV template belongs in the repository
 .env*
 !.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*firebase-adminsdk*.json
+service-account*.json
+serviceAccount*.json
+credentials*.json
+
+# Local hosting/editor/OS state
 .vercel/
+.firebase/
 .vscode/
+.idea/
 .DS_Store
 Thumbs.db
-npm-debug.log*
+Desktop.ini
