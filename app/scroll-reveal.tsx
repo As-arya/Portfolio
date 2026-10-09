@@ -12,14 +12,14 @@ export default function ScrollReveal({ text }: { text: string }) {
   useEffect(() => {
     const el = ref.current;
     if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const trigger = el.closest(".about") ?? el;
     const words = el.querySelectorAll(".scroll-reveal-word");
     const context = gsap.context(() => {
       gsap.fromTo(words, { opacity: 0.15 }, {
         opacity: 1,
-        stagger: 0.05,
-        ease: "none",
-        scrollTrigger: { trigger, start: "center 70%", end: "center center", scrub: true },
+        duration: 0.45,
+        stagger: 0.012,
+        ease: "power2.out",
+        scrollTrigger: { trigger: el, start: "top 95%", once: true },
       });
     }, el);
     return () => context.revert();

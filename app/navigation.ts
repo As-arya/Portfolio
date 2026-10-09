@@ -3,5 +3,5 @@ export function activeSection(
   sections: { id: string; top: number }[],
   line: number,
 ) {
-  return sections.findLast((section) => section.top <= line)?.id ?? "home";
+  return sections.findLast((section) => section.top <= line)?.id ?? sections[0]?.id ?? "about";
 }

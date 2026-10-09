@@ -184,6 +184,12 @@
 .form-bottom > span {
   font-size: 11px;
 }
+.project-tags > span { display: inline-flex; align-items: center; gap: 8px; }
+.stack-icon { flex: none; object-fit: contain; }
+[data-theme="dark"] :is(.stack-icon-nextjs, .stack-icon-express, .stack-icon-railway, .stack-icon-codex) { filter: invert(1); }
+.project-stack { max-width: 760px; margin: 36px auto 0; padding-top: 24px; border-top: 1px solid var(--line); }
+.project-stack .eyebrow { font-size: 10px; font-weight: 500; }
+.project-stack .project-tags > span { padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
 /* Real suspended card. The canvas is isolated from Motion's DOM transforms. */
 .lanyard-area {
   align-self: stretch;
@@ -200,41 +206,12 @@
   inset: -50px -55px 65px;
   overflow: hidden;
   mask-image: linear-gradient(to bottom, transparent, #000 28px);
-  touch-action: none;
-  cursor: grab;
-}
-.lanyard-stage:active {
-  cursor: grabbing;
+  touch-action: pan-y;
 }
 .lanyard-stage canvas {
-  touch-action: none;
+  touch-action: pan-y;
 }
-.lanyard-controls {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 12px;
-}
-.lanyard-controls > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.lanyard-hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--muted);
-}
-.lanyard-controls .pill {
-  min-height: 44px;
-  font-size: 12px;
-}
+.lanyard-stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .lanyard-loading {
   height: 690px;
 }
@@ -258,7 +235,7 @@
 .static-strap {
   height: 160px;
   width: 26px;
-  background: #222830;
+  background: #171c22;
   flex-shrink: 0;
 }
 .lanyard-static img {
@@ -266,7 +243,7 @@
   height: auto;
   border-radius: 18px;
   box-shadow: 0 20px 28px -10px var(--shadow);
-  border: 1px solid #b8c0c7;
+  border: 1px solid #111111;
 }
 @media (max-width: 1200px) {
   .nav-links a {
@@ -293,7 +270,7 @@
     height: 625px;
   }
   .lanyard-stage {
-    inset: -20px -35px 70px;
+    inset: -20px -28px 70px;
   }
   .body-copy {
     font-size: 15px;

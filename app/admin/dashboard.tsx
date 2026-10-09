@@ -5,23 +5,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { getClientAuth } from "../../lib/firebase-client";
-import type { Block, ContactRecord, Media, ProjectRecord } from "../../lib/models";
+import type { Block, CertificateRecord, ContactRecord, EducationLocale, EducationRecord, Media, ProjectRecord } from "../../lib/models";
+import { skills } from "../data";
+import StackTags, { TechnologyIcon } from "../project-stack";
+import { api, uploadImage } from "./api";
+import CertificateEditor from "./certificate-editor";
 
-type Tab = "overview" | "projects" | "contacts";
+type Tab = "overview" | "projects" | "education" | "certificates" | "contacts";
 type Language = "id" | "en";
 type Availability = "open_to_work" | "hired";
-
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    ...init,
-    headers: { ...(init?.body ? { "Content-Type": "application/json" } : {}), ...init?.headers },
-  });
-  if (!response.ok) {
-    const body = await response.json().catch(() => ({})) as { error?: string };
-    throw new Error(body.error || `Permintaan gagal (${response.status}).`);
-  }
-  return response.json() as Promise<T>;
-}
 
 function newProject(order: number): ProjectRecord {
   const translation = () => ({ title: "", category: "", summary: "", blocks: [] as Block[] });
@@ -59,6 +51,7 @@ function ProjectPreview({ project, lang }: { project: ProjectRecord; lang: Langu
       ? block.image && <img key={block.id} src={block.image.url} alt={lang === "id" ? block.image.altId : block.image.altEn} />
       : block.type === "heading" ? <h3 key={block.id}>{block.text || "Judul bagian"}</h3>
         : <p key={block.id}>{block.text || "Paragraf"}</p>)}</div>
+    <StackTags tags={project.stack} />
   </div>;
 }
 
@@ -76,12 +69,18 @@ function ProjectEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
+  const [stackInput, setStackInput] = useState("");
   const uploaded = useRef(new Set<string>());
   const translation = project.translations[lang];
   const editing = Boolean(initial.slug);
 
   function changeTranslation(field: "title" | "category" | "summary", value: string) {
     setProject((current) => ({ ...current, translations: { ...current.translations, [lang]: { ...current.translations[lang], [field]: value } } }));
+  }
+  function addStack() {
+    const tags = stackInput.split(",").map(tag => tag.trim()).filter(Boolean);
+    setProject(current => ({ ...current, stack: [...new Set([...current.stack, ...tags])] }));
+    setStackInput("");
   }
   function changeBlocks(blocks: Block[]) {
     setProject((current) => ({ ...current, translations: { ...current.translations, [lang]: { ...current.translations[lang], blocks } } }));
@@ -96,23 +95,9 @@ function ProjectEditor({
     setProject((current) => ({ ...current, coverImages: current.coverImages.map((image, position) => position === index ? { ...image, ...value } : image) }));
   }
   async function upload(file: File): Promise<Media> {
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 10 * 1024 * 1024) throw new Error("Gunakan JPEG, PNG, atau WebP maksimal 10 MB.");
-    const signed = await api<{ signature: string; timestamp: number; assetFolder: string; publicIdPrefix: string; apiKey: string; cloudName: string; uploadPreset: string }>("/api/admin/upload-signature", {
-      method: "POST", body: JSON.stringify({ fileSize: file.size, fileType: file.type }),
-    });
-    const form = new FormData();
-    form.set("file", file);
-    form.set("api_key", signed.apiKey);
-    form.set("timestamp", String(signed.timestamp));
-    form.set("asset_folder", signed.assetFolder);
-    form.set("public_id_prefix", signed.publicIdPrefix);
-    form.set("upload_preset", signed.uploadPreset);
-    form.set("signature", signed.signature);
-    const response = await fetch(`https://api.cloudinary.com/v1_1/${signed.cloudName}/image/upload`, { method: "POST", body: form });
-    if (!response.ok) throw new Error("Foto gagal diunggah ke Cloudinary.");
-    const data = await response.json() as { public_id: string; secure_url: string };
-    uploaded.current.add(data.public_id);
-    return { publicId: data.public_id, url: data.secure_url, altId: "", altEn: "" };
+    const image = await uploadImage(file);
+    uploaded.current.add(image.publicId);
+    return image;
   }
   async function uploadCover(event: ChangeEvent<HTMLInputElement>) {
     const files = [...(event.target.files || [])];
@@ -212,11 +197,110 @@ function ProjectEditor({
           <div className="admin-cover-list">{project.coverImages.map((image, index) => <div className="admin-cover" key={image.publicId}><img src={image.url} alt={image.altId || `Sampul ${index + 1}`} /><div className="admin-mini-actions"><button aria-label={`Naikkan foto ${index + 1}`} disabled={index === 0} onClick={() => setProject((current) => ({ ...current, coverImages: move(current.coverImages, index, -1) }))}>↑</button><button aria-label={`Turunkan foto ${index + 1}`} disabled={index === project.coverImages.length - 1} onClick={() => setProject((current) => ({ ...current, coverImages: move(current.coverImages, index, 1) }))}>↓</button><button aria-label={`Hapus foto ${index + 1}`} onClick={() => setProject((current) => ({ ...current, coverImages: current.coverImages.filter((_, position) => position !== index) }))}>×</button></div><label>Alt Indonesia<input value={image.altId} onChange={(event) => changeCover(index, { altId: event.target.value })} /></label><label>Alt English<input value={image.altEn} onChange={(event) => changeCover(index, { altEn: event.target.value })} /></label></div>)}</div>
           <label className="admin-upload">+ Tambah foto<input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy} onChange={(event) => void uploadCover(event)} /></label>
         </div>
-        <div className="admin-panel"><h3>Metadata & tautan</h3><div className="admin-form"><label>Teknologi <small>(pisahkan dengan koma)</small><input value={project.stack.join(", ")} onChange={(event) => setProject((current) => ({ ...current, stack: event.target.value.split(",").map((item) => item.trim()).filter(Boolean) }))} /></label>{(["repository", "demo", "video", "playStore"] as const).map((key) => <label key={key}>{key === "playStore" ? "Google Play" : key === "repository" ? "Repository" : key === "demo" ? "Live demo" : "Video"}<input type="url" placeholder="https://" value={project.links[key]} onChange={(event) => setProject((current) => ({ ...current, links: { ...current.links, [key]: event.target.value } }))} /></label>)}</div></div>
+        <div className="admin-panel"><h3>Stack proyek</h3><p className="admin-muted">Pilih teknologi untuk tag berikon di bawah detail proyek.</p>
+          <div className="admin-stack-options">{skills.map(skill => <button key={skill.name} type="button" aria-pressed={project.stack.includes(skill.name)} disabled={busy} onClick={() => setProject(current => ({ ...current, stack: current.stack.includes(skill.name) ? current.stack.filter(tag => tag !== skill.name) : [...current.stack, skill.name] }))}><TechnologyIcon name={skill.name} />{skill.name}</button>)}</div>
+          <div className="admin-form"><label>Teknologi lainnya <small>(pisahkan dengan koma)</small><input maxLength={1500} value={stackInput} disabled={busy} onChange={event => setStackInput(event.target.value)} onKeyDown={event => { if (event.key === "Enter") { event.preventDefault(); addStack(); } }} /></label></div>
+          <div className="admin-inline-actions"><button className="admin-button subtle" disabled={busy || !stackInput.trim()} onClick={addStack}>+ Tambah tag</button></div>
+          {project.stack.length > 0 && <div className="admin-stack-selected" aria-label="Tag terpilih">{project.stack.map(tag => <button key={tag} disabled={busy} aria-label={`Hapus tag ${tag}`} onClick={() => setProject(current => ({ ...current, stack: current.stack.filter(item => item !== tag) }))}><TechnologyIcon name={tag} />{tag}<span aria-hidden="true">×</span></button>)}</div>}
+        </div>
+        <div className="admin-panel"><h3>Tautan</h3><div className="admin-form">{(["repository", "demo", "video", "playStore"] as const).map((key) => <label key={key}>{key === "playStore" ? "Google Play" : key === "repository" ? "Repository" : key === "demo" ? "Live demo" : "Video"}<input type="url" placeholder="https://" value={project.links[key]} onChange={(event) => setProject((current) => ({ ...current, links: { ...current.links, [key]: event.target.value } }))} /></label>)}</div></div>
       </aside>
     </div>}
     <div className="admin-savebar"><span>{editing ? `/${initial.slug}` : "Slug dibuat dari judul Indonesia saat pertama disimpan."}</span><div><button className="admin-button subtle" disabled={busy} onClick={() => void save("draft")}>{busy ? "Menyimpan…" : "Simpan draft"}</button><button className="admin-button primary" disabled={busy} onClick={() => void save("published")}>Terbitkan</button></div></div>
     {error && <p className="admin-error" role="alert">{error}</p>}{note && <p className="admin-notice" role="status">{note}</p>}
+  </section>;
+}
+
+function EducationEditor({ initial, onSaved, onBusy }: { initial: EducationRecord[]; onSaved: (entries: EducationRecord[]) => void; onBusy: (busy: boolean) => void }) {
+  const [entries, setEntries] = useState(() => structuredClone(initial));
+  const [lang, setLang] = useState<Language>("id");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
+  const baseline = useRef(initial);
+  const uploaded = useRef(new Set<string>());
+
+  useEffect(() => () => {
+    void Promise.allSettled([...uploaded.current].map(publicId => api("/api/admin/media/delete", { method: "POST", body: JSON.stringify({ publicId }) })));
+  }, []);
+  function working(value: boolean) { setBusy(value); onBusy(value); }
+
+  function change(index: number, value: Partial<EducationRecord>) {
+    setSaved(false);
+    setEntries(current => current.map((entry, position) => position === index ? { ...entry, ...value } : entry));
+  }
+  function translate(index: number, value: Partial<EducationLocale>) {
+    const entry = entries[index];
+    change(index, { translations: { ...entry.translations, [lang]: { ...entry.translations[lang], ...value } } });
+  }
+  function add() {
+    const translation = (): EducationLocale => ({ program: "", description: "", courseworkTitle: "", courses: [] });
+    setEntries(current => [...current, { id: crypto.randomUUID(), institution: "", startYear: new Date().getFullYear(), endYear: null, translations: { id: translation(), en: translation() } }]);
+    setSaved(false);
+  }
+  async function uploadLogo(event: ChangeEvent<HTMLInputElement>, index: number) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    working(true); setError("");
+    try {
+      const logo = await uploadImage(file);
+      uploaded.current.add(logo.publicId);
+      change(index, { logo });
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Logo gagal diunggah."); }
+    finally { working(false); }
+  }
+  async function save() {
+    working(true); setError(""); setSaved(false);
+    try {
+      const result = await api<{ education: EducationRecord[] }>("/api/admin/education", { method: "PUT", body: JSON.stringify({ education: entries }) });
+      const savedIds = new Set(result.education.map(entry => entry.logo?.publicId));
+      const removed = [...new Set([...baseline.current.flatMap(entry => entry.logo ? [entry.logo.publicId] : []), ...uploaded.current])].filter(id => id.startsWith("portfolio/") && !savedIds.has(id));
+      baseline.current = result.education;
+      uploaded.current.clear();
+      setEntries(result.education); onSaved(result.education); setSaved(true);
+      const cleanup = await Promise.allSettled(removed.map(publicId => api("/api/admin/media/delete", { method: "POST", body: JSON.stringify({ publicId }) })));
+      if (cleanup.some(item => item.status === "rejected")) setError("Pendidikan tersimpan. Sebagian logo lama masih digunakan atau belum terhapus.");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Pendidikan gagal disimpan."); }
+    finally { working(false); }
+  }
+  return <section className="admin-page-section">
+    <div className="admin-section-heading"><div><span className="admin-kicker">LEARNING JOURNEY</span><h1>Education.</h1><p className="admin-lead">Tambahkan SMA, universitas, atau pendidikan lainnya. Lengkapi program dalam kedua bahasa; deskripsi dan mata kuliah opsional.</p></div><button className="admin-button primary" disabled={busy || entries.length >= 20} onClick={add}>+ Pendidikan baru</button></div>
+    <div className="admin-segment" aria-label="Bahasa pendidikan"><button disabled={busy} className={lang === "id" ? "active" : ""} onClick={() => setLang("id")}>Indonesia</button><button disabled={busy} className={lang === "en" ? "active" : ""} onClick={() => setLang("en")}>English</button></div>
+    <fieldset className="admin-education-list" disabled={busy}>
+      {!entries.length && <p className="admin-empty">Belum ada pendidikan. Tambahkan entri, lalu simpan untuk menampilkannya di situs.</p>}
+      {entries.map((entry, index) => {
+        const content = entry.translations[lang];
+        return <article className="admin-panel" key={entry.id}>
+          <div className="admin-inline-heading"><h2>{entry.institution || `Pendidikan ${index + 1}`}</h2><div className="admin-mini-actions"><button aria-label={`Naikkan pendidikan ${index + 1}`} disabled={index === 0} onClick={() => { setEntries(move(entries, index, -1)); setSaved(false); }}>↑</button><button aria-label={`Turunkan pendidikan ${index + 1}`} disabled={index === entries.length - 1} onClick={() => { setEntries(move(entries, index, 1)); setSaved(false); }}>↓</button><button aria-label={`Hapus pendidikan ${index + 1}`} onClick={() => { setEntries(entries.filter((_, position) => position !== index)); setSaved(false); }}>×</button></div></div>
+          <div className="admin-form">
+            <label>Institusi<input maxLength={200} value={entry.institution} onChange={event => change(index, { institution: event.target.value })} placeholder="Nama sekolah atau universitas" /></label>
+            <div className="admin-education-logo">
+              {entry.logo && <img src={entry.logo.url} alt={(lang === "id" ? entry.logo.altId : entry.logo.altEn) || entry.institution} />}
+              <label className="admin-upload">{entry.logo ? "Ganti logo institusi" : "Unggah logo institusi"}<input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void uploadLogo(event, index)} /></label>
+              {entry.logo && <button className="admin-button subtle" onClick={() => change(index, { logo: null })}>Hapus logo</button>}
+              <p className="admin-muted">Logo opsional · JPEG, PNG, atau WebP · maksimal 10 MB.</p>
+            </div>
+            {entry.logo && <label>Teks alternatif logo ({lang === "id" ? "Indonesia" : "English"})<input maxLength={250} value={(lang === "id" ? entry.logo.altId : entry.logo.altEn) || ""} onChange={event => change(index, { logo: { ...entry.logo!, [lang === "id" ? "altId" : "altEn"]: event.target.value } })} /></label>}
+            <div className="admin-form two"><label>Tahun mulai<input type="number" min={1900} max={2100} value={entry.startYear || ""} onChange={event => change(index, { startYear: Number(event.target.value) })} /></label><label>Tahun selesai<input type="number" min={entry.startYear || 1900} max={2100} disabled={entry.endYear === null} value={entry.endYear || ""} onChange={event => change(index, { endYear: Number(event.target.value) })} /></label></div>
+            <label className="admin-checkbox"><input type="checkbox" checked={entry.endYear === null} onChange={event => change(index, { endYear: event.target.checked ? null : Math.max(entry.startYear, new Date().getFullYear()) })} />Masih berjalan (Sekarang / Present)</label>
+            <label>Program / jurusan ({lang === "id" ? "Indonesia" : "English"})<input maxLength={160} value={content.program} onChange={event => translate(index, { program: event.target.value })} /></label>
+            <label>Deskripsi <small>(opsional)</small><textarea rows={3} maxLength={5000} value={content.description} onChange={event => translate(index, { description: event.target.value })} /></label>
+          </div>
+          <div className="admin-education-courses"><h3>Mata pelajaran / mata kuliah <small>(opsional)</small></h3>
+            <div className="admin-form"><label>Judul bagian materi ({lang === "id" ? "Indonesia" : "English"})<input maxLength={160} value={content.courseworkTitle || ""} placeholder={lang === "id" ? "Mata Pelajaran / Mata Kuliah" : "Selected Coursework"} onChange={event => translate(index, { courseworkTitle: event.target.value })} /></label></div>
+            <p className="admin-muted">Teks judul ini tampil di atas daftar materi pada situs. Edit kedua bahasa melalui pilihan Indonesia / English, lalu simpan pendidikan. Kosongkan untuk memakai judul bawaan.</p>
+            <div className="admin-block-list">{content.courses.map((course, courseIndex) => <div className="admin-block" key={courseIndex}>
+              <div className="admin-block-head"><strong>Materi {courseIndex + 1}</strong><button className="admin-button subtle" aria-label={`Hapus materi ${courseIndex + 1}`} onClick={() => translate(index, { courses: content.courses.filter((_, position) => position !== courseIndex) })}>Hapus</button></div>
+              <div className="admin-form"><label>Nama mata pelajaran / mata kuliah<input maxLength={160} value={course.title} onChange={event => translate(index, { courses: content.courses.map((item, position) => position === courseIndex ? { ...item, title: event.target.value } : item) })} /></label><label>Penjelasan materi <small>(opsional)</small><textarea rows={2} maxLength={2000} value={course.description} onChange={event => translate(index, { courses: content.courses.map((item, position) => position === courseIndex ? { ...item, description: event.target.value } : item) })} /></label></div>
+            </div>)}</div>
+            <div className="admin-inline-actions"><button className="admin-button subtle" disabled={content.courses.length >= 30} onClick={() => translate(index, { courses: [...content.courses, { title: "", description: "" }] })}>+ Tambah materi</button></div>
+          </div>
+        </article>;
+      })}
+    </fieldset>
+    <div className="admin-savebar"><span>Urutan di atas digunakan pada situs.</span><button className="admin-button primary" disabled={busy} onClick={() => void save()}>{busy ? "Menyimpan…" : "Simpan pendidikan"}</button></div>
+    {error && <p className="admin-error" role="alert">{error}</p>}{saved && <p className="admin-notice" role="status">Pendidikan berhasil disimpan.</p>}
   </section>;
 }
 
@@ -226,6 +310,8 @@ export default function AdminPage() {
   const [ready, setReady] = useState(false);
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
   const [contacts, setContacts] = useState<ContactRecord[]>([]);
+  const [education, setEducation] = useState<EducationRecord[]>([]);
+  const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
   const [availability, setAvailability] = useState<Availability>("open_to_work");
   const [editing, setEditing] = useState<ProjectRecord | null>(null);
   const [selectedContact, setSelectedContact] = useState<string | null>(null);
@@ -237,14 +323,18 @@ export default function AdminPage() {
     api<{ role: "primary" | "recovery" }>("/api/admin/session")
       .then(async ({ role }) => {
         if (role !== "primary") { router.replace("/admin/recovery"); return; }
-        const [projectData, settingData, contactData] = await Promise.all([
+        const [projectData, settingData, contactData, educationData, certificateData] = await Promise.all([
           api<{ projects: ProjectRecord[] }>("/api/admin/projects"),
           api<{ availability: Availability }>("/api/admin/settings"),
           api<{ contacts: ContactRecord[] }>("/api/admin/contacts"),
+          api<{ education: EducationRecord[] }>("/api/admin/education"),
+          api<{ certificates: CertificateRecord[] }>("/api/admin/certificates"),
         ]);
         setProjects(projectData.projects.sort((a, b) => a.order - b.order));
         setAvailability(settingData.availability);
         setContacts(contactData.contacts);
+        setEducation(educationData.education);
+        setCertificates(certificateData.certificates);
         setReady(true);
       }).catch((cause) => {
         if (cause instanceof Error && cause.message.includes("401")) router.replace("/admin/login");
@@ -311,21 +401,23 @@ export default function AdminPage() {
 
   return <main className="admin-shell">
     <aside className="admin-sidebar"><Link href="/" className="admin-brand"><span>A</span><strong>ASARYA / ADMIN</strong></Link><nav aria-label="Navigasi admin">
-      {(["overview", "projects", "contacts"] as const).map((item) => <button key={item} className={tab === item ? "active" : ""} onClick={() => { setTab(item); setEditing(null); setError(""); }}>
-        {item === "overview" ? "Ringkasan" : item === "projects" ? "Proyek" : "Pesan"}{item === "contacts" && contacts.some((contact) => !contact.read) && <span className="admin-dot" aria-label="Ada pesan belum dibaca" />}
+      {(["overview", "projects", "education", "certificates", "contacts"] as const).map((item) => <button key={item} disabled={busy} className={tab === item ? "active" : ""} onClick={() => { setTab(item); setEditing(null); setError(""); }}>
+        {item === "overview" ? "Ringkasan" : item === "projects" ? "Proyek" : item === "education" ? "Education" : item === "certificates" ? "Certificates" : "Pesan"}{item === "contacts" && contacts.some((contact) => !contact.read) && <span className="admin-dot" aria-label="Ada pesan belum dibaca" />}
       </button>)}
     </nav><div className="admin-sidebar-foot"><Link href="/" target="_blank">Lihat situs ↗</Link><button onClick={() => void logout()}>Keluar</button></div></aside>
     <div className="admin-content"><header className="admin-topbar"><span className="admin-kicker">CONTENT MANAGEMENT</span><span>Akun utama · <span className="admin-online">Aktif</span></span></header>
       {error && <p className="admin-error" role="alert">{error} <button onClick={() => setError("")} aria-label="Tutup pesan kesalahan">×</button></p>}
       {notice && <p className="admin-notice" role="status">{notice} <button onClick={() => setNotice("")} aria-label="Tutup pemberitahuan">×</button></p>}
-      {tab === "overview" && <section className="admin-page-section"><span className="admin-kicker">DASHBOARD</span><h1>Selamat datang.</h1><p className="admin-lead">Kelola status kerja, karya, dan pesan dari satu tempat.</p>
+      {tab === "overview" && <section className="admin-page-section"><span className="admin-kicker">DASHBOARD</span><h1>Selamat datang.</h1><p className="admin-lead">Kelola status kerja, pendidikan, karya, dan pesan dari satu tempat.</p>
         <div className="admin-stats"><div><strong>{projects.length}</strong><span>Proyek</span></div><div><strong>{projects.filter((project) => project.status === "published").length}</strong><span>Terbit</span></div><div><strong>{contacts.filter((contact) => !contact.read).length}</strong><span>Pesan baru</span></div></div>
-        <section className="admin-panel admin-status-panel"><div><span className="admin-kicker">AVAILABILITY</span><h2>Status kerja</h2><p className="admin-muted">Label ini tampil di bagian Hero portofolio.</p></div><div className="admin-status-buttons"><button className={availability === "open_to_work" ? "selected" : ""} disabled={busy} onClick={() => void updateAvailability("open_to_work")}>Open to work</button><button className={availability === "hired" ? "selected" : ""} disabled={busy} onClick={() => void updateAvailability("hired")}>Hired</button></div></section>
+        <section className="admin-panel admin-status-panel"><div><span className="admin-kicker">AVAILABILITY</span><h2>Status kerja</h2><p className="admin-muted">Label ini tampil di bagian About portofolio.</p></div><div className="admin-status-buttons"><button className={availability === "open_to_work" ? "selected" : ""} disabled={busy} onClick={() => void updateAvailability("open_to_work")}>Open to work</button><button className={availability === "hired" ? "selected" : ""} disabled={busy} onClick={() => void updateAvailability("hired")}>Hired</button></div></section>
         <div className="admin-quick-actions"><button className="admin-button primary" onClick={() => { setTab("projects"); setEditing(newProject(projects.length)); }}>+ Tambah proyek</button><button className="admin-button subtle" onClick={() => setTab("contacts")}>Buka pesan</button></div>
       </section>}
       {tab === "projects" && (editing ? <ProjectEditor key={editing.slug || "new"} initial={editing} count={projects.length} onSaved={onSaved} onClose={() => setEditing(null)} /> : <section className="admin-page-section"><div className="admin-section-heading"><div><span className="admin-kicker">PORTFOLIO CONTENT</span><h1>Proyek.</h1><p className="admin-lead">Atur urutan, konten, dan visibilitas proyek.</p></div><button className="admin-button primary" onClick={() => setEditing(newProject(projects.length))}>+ Proyek baru</button></div><div className="admin-project-list">{projects.map((project, index) => <article className="admin-project-row" key={project.slug}>
         <div className="admin-project-thumb">{project.coverImages[0] ? <img src={project.coverImages[0].url} alt={project.coverImages[0].altId} /> : <span>◇</span>}</div><div className="admin-project-info"><div><span className={`admin-badge ${project.status}`}>{project.status === "published" ? "Terbit" : "Draft"}</span><span className="admin-muted">/{project.slug}</span></div><h2>{project.translations.id.title || "Tanpa judul"}</h2><p>{project.translations.en.title || "Judul English belum diisi"}</p></div><div className="admin-project-actions"><div className="admin-mini-actions"><button aria-label={`Naikkan ${project.translations.id.title}`} disabled={busy || index === 0} onClick={() => void reorder(index, -1)}>↑</button><button aria-label={`Turunkan ${project.translations.id.title}`} disabled={busy || index === projects.length - 1} onClick={() => void reorder(index, 1)}>↓</button></div><button className="admin-button subtle" onClick={() => setEditing(project)}>Edit</button><button className="admin-button subtle" disabled={busy} onClick={() => void changeStatus(project)}>{project.status === "published" ? "Sembunyikan" : "Terbitkan"}</button>{project.status === "published" && <Link className="admin-button subtle" href={`/projects/${project.slug}`} target="_blank">Lihat ↗</Link>}</div>
       </article>)}</div></section>)}
+      {tab === "education" && <EducationEditor initial={education} onSaved={setEducation} onBusy={setBusy} />}
+      {tab === "certificates" && <CertificateEditor initial={certificates} onSaved={setCertificates} onBusy={setBusy} />}
       {tab === "contacts" && <section className="admin-page-section"><div className="admin-section-heading"><div><span className="admin-kicker">INBOX</span><h1>Pesan masuk.</h1><p className="admin-lead">Seluruh pesan Contact tersimpan di sini.</p></div><a className="admin-button subtle" href="/api/admin/contacts/export" download>Ekspor CSV ↓</a></div><div className="admin-inbox"><div className="admin-message-list">{contacts.length ? contacts.map((contact) => <button key={contact.id} className={`${selectedContact === contact.id ? "selected" : ""} ${!contact.read ? "unread" : ""}`} onClick={() => void selectContact(contact)}><span><strong>{contact.name}</strong><small>{new Date(contact.createdAt).toLocaleString("id-ID")}</small></span><span>{contact.email}</span><p>{contact.message}</p></button>) : <p className="admin-empty">Belum ada pesan masuk.</p>}</div><div className="admin-message-detail">{activeContact ? <><div className="admin-message-header"><span className="admin-kicker">CONTACT MESSAGE</span><h2>{activeContact.name}</h2><a href={`mailto:${activeContact.email}`}>{activeContact.email}</a><time dateTime={activeContact.createdAt}>{new Date(activeContact.createdAt).toLocaleString("id-ID")}</time></div><p className="admin-message-body">{activeContact.message}</p><div className="admin-message-foot"><span className={`admin-badge ${activeContact.emailStatus}`}>Email {activeContact.emailStatus === "sent" ? "terkirim" : activeContact.emailStatus === "failed" ? "gagal" : "menunggu"}</span>{activeContact.emailStatus === "failed" && <button className="admin-button subtle" disabled={busy} onClick={() => void retry(activeContact)}>Kirim ulang email</button>}{activeContact.read && <button className="admin-button subtle" disabled={busy} onClick={() => void api<{ contact: ContactRecord }>(`/api/admin/contacts/${encodeURIComponent(activeContact.id)}`, { method: "PATCH", body: JSON.stringify({ read: false }) }).then(({ contact }) => setContacts((current) => current.map((item) => item.id === contact.id ? contact : item))).catch((cause) => setError(cause instanceof Error ? cause.message : "Gagal."))}>Tandai belum dibaca</button>}</div>{activeContact.emailError && <p className="admin-muted">Keterangan email: {activeContact.emailError}</p>}</> : <p className="admin-empty">Pilih pesan untuk membaca isinya.</p>}</div></div></section>}
     </div>
   </main>;

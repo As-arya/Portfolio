@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 
 test.use({ channel: "msedge", viewport: { width: 1908, height: 900 } });
 
-test("section animations replay and project effects remain interactive", async ({ page }) => {
+test("intro stays readable on return and project effects remain interactive", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("portfolio-language", "en"));
   await page.goto("http://127.0.0.1:3000");
   await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
@@ -12,14 +12,6 @@ test("section animations replay and project effects remain interactive", async (
   await expect(page).toHaveURL(/#about$/);
   await expect(name).toHaveText("Asarya\nJachred Alotia");
   const about = page.locator("#about");
-  await about.evaluate((section) => {
-    const bounds = section.getBoundingClientRect();
-    scrollTo({ top: scrollY + bounds.top + bounds.height / 2 - innerHeight * 0.75, behavior: "instant" });
-  });
-  await expect.poll(() => page.locator(".scroll-reveal-word").evaluateAll((words) =>
-    Math.max(...words.map((word) => Number(getComputedStyle(word).opacity))),
-  )).toBeLessThan(0.2);
-  await about.evaluate((section) => section.scrollIntoView({ block: "center", behavior: "instant" }));
   await expect.poll(() => page.locator(".scroll-reveal-word").last().evaluate((word) => getComputedStyle(word).opacity)).toBe("1");
   expect(await page.locator(".scroll-reveal").evaluate((paragraph) => getComputedStyle(paragraph).fontWeight)).toBe("650");
   await expect(page.locator(".social-links")).toBeVisible();
@@ -28,9 +20,10 @@ test("section animations replay and project effects remain interactive", async (
   expect(await page.locator(".scroll-reveal").evaluate((paragraph) => getComputedStyle(paragraph).transform)).toBe("none");
   expect(await page.locator(".typing-name").evaluate((heading) => heading.style.opacity)).toBe("");
   await page.locator("#projects").scrollIntoViewIfNeeded();
-  await expect(name).toBeEmpty();
+  await expect(name).toHaveText("Asarya\nJachred Alotia");
   await page.locator('.nav-links a[href="#about"]').click();
   await expect(name).toHaveText("Asarya\nJachred Alotia");
+  await expect(page.locator(".scroll-reveal-word").last()).toHaveCSS("opacity", "1");
 
   const title = page.locator(".decrypted-text-animated");
   await title.scrollIntoViewIfNeeded();

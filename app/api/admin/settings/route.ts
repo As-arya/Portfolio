@@ -18,7 +18,7 @@ export async function PUT(request: Request) {
     await requirePrimary();
     const availability = object(await jsonBody(request)).availability;
     if (availability !== "open_to_work" && availability !== "hired") throw new HttpError(400, "Status kerja tidak valid.");
-    await db().collection("settings").doc("public").set({ availability });
+    await db().collection("settings").doc("public").set({ availability }, { merge: true });
     return Response.json({ availability });
   } catch (error) { return errorResponse(error); }
 }

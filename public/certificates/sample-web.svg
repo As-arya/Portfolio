@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="850" viewBox="0 0 1200 850">
+  <rect width="1200" height="850" fill="#f6f4ee"/>
+  <rect x="38" y="38" width="1124" height="774" fill="none" stroke="#617668" stroke-width="2"/>
+  <rect x="54" y="54" width="1092" height="742" fill="none" stroke="#c9cec2"/>
+  <path d="M54 180V54h126M1146 670v126h-126" fill="none" stroke="#617668" stroke-width="9"/>
+  <text x="600" y="142" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" letter-spacing="7" fill="#617668">PORTFOLIO / SAMPLE DOCUMENT</text>
+  <text x="600" y="268" text-anchor="middle" font-family="Georgia, serif" font-size="74" fill="#2f3d34">Certificate</text>
+  <text x="600" y="318" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" letter-spacing="6" fill="#617668">OF COMPLETION</text>
+  <line x1="430" y1="366" x2="770" y2="366" stroke="#c9cec2"/>
+  <text x="600" y="425" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" fill="#70786d">This sample is presented to</text>
+  <text x="600" y="493" text-anchor="middle" font-family="Georgia, serif" font-size="44" fill="#2f3d34">Your Name</text>
+  <text x="600" y="570" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="bold" fill="#2f3d34">Frontend Fundamentals</text>
+  <text x="600" y="610" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="#70786d">HTML / CSS / JavaScript / Responsive Design</text>
+  <rect x="479" y="680" width="242" height="45" rx="22" fill="#e3e8df"/>
+  <text x="600" y="709" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" letter-spacing="3" fill="#617668">DEMO — CONTOH</text>
+  <text x="600" y="765" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#70786d">Preview image only. Not an actual credential.</text>
+</svg>

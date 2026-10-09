@@ -140,5 +140,26 @@
 .admin-message-foot{display:flex;align-items:center;gap:.7rem;padding-top:1rem;border-top:1px solid var(--line)}
 .admin-message-foot+.admin-muted{margin-top:1rem}
 .admin-empty{padding:1.5rem;color:var(--muted);font-size:.85rem}
+.admin-certificate-list{display:grid;gap:1.25rem;min-width:0;margin:1.25rem 0 0;padding:0;border:0}
+.admin-certificate-list h2{min-width:0;overflow-wrap:anywhere}
+.admin-certificate-list .admin-mini-actions{flex:none}
+.admin-certificate-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:1.5rem}
+.admin-certificate-photo{display:grid;width:100%;aspect-ratio:1.42;place-items:center;object-fit:contain;border:1px solid var(--line);border-radius:12px;background:var(--bg);margin-bottom:1rem}
+.admin-certificate-grid .admin-muted{margin-top:.7rem;font-size:.75rem}
+@media(max-width:720px){.admin-certificate-grid{grid-template-columns:1fr}}
+.admin-education-list{display:grid;gap:1.25rem;min-width:0;margin:1.25rem 0 0;padding:0;border:0}
+.admin-education-list h2{min-width:0;overflow-wrap:anywhere}
+.admin-education-list .admin-mini-actions{flex:none}
+.admin-education-list .admin-checkbox{display:flex;align-items:center;gap:.6rem;font-weight:500}
+.admin-checkbox input{width:18px;height:18px;padding:0;flex:none;accent-color:var(--accent)}
+.admin-education-courses{margin-top:1.5rem}
+.admin-education-courses>h3{margin-bottom:1rem}
+.admin-stack-options,.admin-stack-selected{display:flex;flex-wrap:wrap;gap:.45rem;margin-bottom:1rem}
+.admin-stack-selected{margin:1rem 0 0}
+.admin-stack-options button,.admin-stack-selected button{display:inline-flex;align-items:center;gap:.45rem;padding:.5rem .65rem;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font-size:.72rem}
+.admin-stack-options button[aria-pressed=true]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--bg))}
 @media(max-width:1050px){.admin-project-row{flex-wrap:wrap}.admin-project-actions{width:100%;justify-content:flex-end}.admin-editor-grid{grid-template-columns:1fr}.admin-editor-side{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.admin-shell{display:block}.admin-sidebar{position:static;min-height:auto;padding:1rem}.admin-brand{margin:0 0 1rem}.admin-sidebar nav{display:flex;overflow-x:auto}.admin-sidebar nav button{width:auto;white-space:nowrap}.admin-sidebar-foot{display:none}.admin-content{padding:0 1rem 3rem}.admin-topbar{height:64px;margin-bottom:2rem}.admin-topbar>span:last-child{display:none}.admin-stats{gap:.5rem;margin:2rem 0}.admin-stats>div{padding:1rem}.admin-stats strong{font-size:1.9rem}.admin-status-panel{align-items:stretch;flex-direction:column}.admin-status-buttons{flex-wrap:wrap}.admin-section-heading{align-items:start;flex-direction:column}.admin-editor-actions{flex-wrap:wrap}.admin-editor-side{grid-template-columns:1fr}.admin-inbox{grid-template-columns:1fr}.admin-message-list{max-height:300px;border-right:0;border-bottom:1px solid var(--line)}.admin-savebar{align-items:stretch;flex-direction:column}.admin-savebar>div{justify-content:flex-end}}
+.admin-education-logo { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.admin-education-logo img { width: 80px; height: 80px; object-fit: contain; border-radius: 12px; }
+.admin-education-logo .admin-muted { flex-basis: 100%; }

@@ -1,10 +1,35 @@
 export type Availability = "open_to_work" | "hired";
 
+export type EducationLocale = {
+  program: string;
+  description: string;
+  courseworkTitle?: string;
+  courses: { title: string; description: string }[];
+};
+
+export type EducationRecord = {
+  id: string;
+  institution: string;
+  logo?: Media | null;
+  startYear: number;
+  endYear: number | null;
+  translations: { id: EducationLocale; en: EducationLocale };
+};
+
 export type Media = {
   publicId: string;
   url: string;
   altId: string;
   altEn: string;
+};
+
+export type CertificateRecord = {
+  id: string;
+  image: Media;
+  translations: {
+    id: { title: string; description: string };
+    en: { title: string; description: string };
+  };
 };
 
 export type Block = {

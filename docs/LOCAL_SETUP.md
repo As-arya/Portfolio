@@ -1,5 +1,7 @@
 # Menjalankan backend dan admin secara lokal
 
+Untuk sumber nilai setiap variabel, urutan pendaftaran akun, dan troubleshooting, ikuti [`ENV_SETUP.md`](ENV_SETUP.md). Lengkapi `.env.local` yang sudah ada tanpa menimpanya.
+
 Fitur admin dan Contact membutuhkan akun gratis Firebase dan Cloudinary serta Gmail cadangan. Turnstile dapat memakai kunci tes resmi selama pengembangan. Tidak ada langkah deploy dalam panduan ini.
 
 ## 1. Siapkan berkas environment
@@ -17,7 +19,7 @@ Gunakan Node.js 24. Dari folder `Portfolio`, jalankan `npm ci`, lalu salin `.env
 
 ## 3. Cloudinary dan Gmail
 
-1. Buat akun [Cloudinary Free](https://cloudinary.com/pricing) dengan mode **Dynamic folders**. Buat *signed upload preset* yang hanya mengizinkan JPG, PNG, WebP dengan batas 10 MB. Isi `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, dan `CLOUDINARY_UPLOAD_PRESET`.
+1. Buat akun [Cloudinary](https://console.cloudinary.com/) dengan mode **Dynamic folders**. Buat *signed upload preset* yang hanya mengizinkan JPG, PNG, WebP. Batas 10 MB diperiksa oleh aplikasi; preset tidak menyediakan batas ukuran per preset. Isi `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, dan `CLOUDINARY_UPLOAD_PRESET`. [Dokumentasi preset](https://cloudinary.com/documentation/upload_presets)
 2. Pada Gmail cadangan, aktifkan Verifikasi 2 Langkah dan buat [App Password](https://support.google.com/accounts/answer/185833?hl=id). Isi `BACKUP_GMAIL_ADDRESS` dan `BACKUP_GMAIL_APP_PASSWORD`. Backend memakai akun ini untuk mengirim notifikasi Contact ke Gmail utama dan tautan pemulihan ke Gmail cadangan. Jangan gunakan sandi login Google biasa.
 
 ## 4. Turnstile lokal

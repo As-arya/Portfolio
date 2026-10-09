@@ -1,7 +1,8 @@
 import { projects as legacyProjects, type Project as LegacyProject } from "../app/data";
 import { requirePrimary } from "./auth";
 import { db, firebaseConfigured } from "./firebase-admin";
-import type { Availability, ProjectRecord } from "./models";
+import type { Availability, CertificateRecord, EducationRecord, ProjectRecord } from "./models";
+import { sampleCertificates, sampleEducation } from "../app/sample-content";
 
 export function legacyProject(project: LegacyProject, order: number): ProjectRecord {
   return {
@@ -43,4 +44,14 @@ export async function getAvailability(): Promise<Availability> {
   if (!firebaseConfigured()) return "open_to_work";
   const value = (await db().collection("settings").doc("public").get()).data()?.availability;
   return value === "hired" ? "hired" : "open_to_work";
+}
+
+export async function getEducation(): Promise<EducationRecord[]> {
+  if (!firebaseConfigured()) return sampleEducation;
+  return (await db().collection("settings").doc("public").get()).data()?.education ?? sampleEducation;
+}
+
+export async function getCertificates(): Promise<CertificateRecord[]> {
+  if (!firebaseConfigured()) return sampleCertificates;
+  return (await db().collection("settings").doc("public").get()).data()?.certificates ?? sampleCertificates;
 }

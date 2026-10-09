@@ -6,6 +6,7 @@ import { IconArrowLeft, IconArrowRight, IconArrowUpRight, IconBrandGithub, IconB
 import { useCopy } from "../../preferences";
 import { Footer, Header } from "../../sections";
 import type { Media, ProjectRecord } from "../../../lib/models";
+import StackTags from "../../project-stack";
 
 export function ProjectGallery({ project }: { project: ProjectRecord }) {
   const { lang, t } = useCopy();
@@ -76,6 +77,15 @@ export function ProjectActions({ project }: { project: ProjectRecord }) {
   </div>;
 }
 
+export function ProjectStack({ project }: { project: ProjectRecord }) {
+  const { t } = useCopy();
+  if (!project.stack.length) return null;
+  return <section className="project-stack" aria-label={t("Teknologi proyek", "Project technology")}>
+    <h2 className="eyebrow">{t("DIBANGUN DENGAN", "BUILT WITH")}</h2>
+    <StackTags tags={project.stack} />
+  </section>;
+}
+
 export function ProjectDetail({ project }: { project: ProjectRecord }) {
   const { lang, t } = useCopy();
   const copy = project.translations[lang];
@@ -89,10 +99,10 @@ export function ProjectDetail({ project }: { project: ProjectRecord }) {
           <span className="eyebrow">{copy.category}</span>
           <h1>{copy.title}</h1>
           <p>{copy.summary}</p>
-          <div className="project-tags">{project.stack.map((tag) => <span key={tag}>{tag}</span>)}</div>
         </div>
         <ProjectGallery project={project} />
         <ProjectBlocks project={project} />
+        <ProjectStack project={project} />
         <ProjectActions project={project} />
       </main>
       <Footer homeLinks />

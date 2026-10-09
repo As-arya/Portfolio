@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="850" viewBox="0 0 1200 850">
+  <rect width="1200" height="850" fill="#f5f4ef"/>
+  <rect width="220" height="850" fill="#303d4a"/>
+  <path d="M40 50h140v140H40zM40 660h140v140H40z" fill="none" stroke="#697d8f"/>
+  <text transform="translate(123 590) rotate(-90)" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" letter-spacing="8" fill="#e4e8eb">LEARN / BUILD / REPEAT</text>
+  <rect x="252" y="38" width="910" height="774" fill="none" stroke="#c6ccd0"/>
+  <text x="302" y="140" font-family="Arial, sans-serif" font-size="18" letter-spacing="5" fill="#697d8f">SAMPLE WORKSHOP</text>
+  <text x="302" y="267" font-family="Georgia, serif" font-size="68" fill="#303d4a">Certificate of</text>
+  <text x="302" y="337" font-family="Georgia, serif" font-size="68" fill="#303d4a">Participation</text>
+  <line x1="302" y1="390" x2="1080" y2="390" stroke="#c6ccd0"/>
+  <text x="302" y="443" font-family="Arial, sans-serif" font-size="20" fill="#727e86">A sample document for</text>
+  <text x="302" y="503" font-family="Georgia, serif" font-size="46" fill="#303d4a">Your Name</text>
+  <text x="302" y="580" font-family="Arial, sans-serif" font-size="29" font-weight="bold" fill="#303d4a">Mobile Development Workshop</text>
+  <text x="302" y="619" font-family="Arial, sans-serif" font-size="20" fill="#727e86">Flutter / Application UI / API Integration</text>
+  <rect x="302" y="683" width="242" height="45" rx="22" fill="#e2e6e9"/>
+  <text x="423" y="712" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" letter-spacing="3" fill="#303d4a">DEMO — CONTOH</text>
+  <text x="302" y="769" font-family="Arial, sans-serif" font-size="15" fill="#727e86">Preview image only. Not an actual credential.</text>
+</svg>

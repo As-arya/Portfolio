@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
-import Image from "next/image";
 import dynamic from "next/dynamic";
 import Script from "next/script";
 import {
@@ -62,11 +61,11 @@ export function Reveal({
   const reduced = useReducedMotion();
   return (
     <motion.div
-      className={className}
-      initial={reduced ? false : { opacity: 0, y: 22 }}
+      className={`motion-reveal ${className}`}
+      initial={{ opacity: 0, y: 22 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: false, amount: 0.12 }}
-      transition={{ duration: 0.55, ease: [0.2, 0.7, 0.2, 1] }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{ duration: reduced ? 0 : 0.55, ease: [0.2, 0.7, 0.2, 1] }}
     >
       {children}
     </motion.div>
@@ -76,7 +75,7 @@ export function Header({ homeLinks = false }: { homeLinks?: boolean }) {
   const { lang, setLang, t } = useCopy();
   const [theme, setTheme] = useState("light");
   const [menu, setMenu] = useState(false);
-  const [active, setActive] = useState("home");
+  const [active, setActive] = useState("about");
   const [scrolled, setScrolled] = useState(false);
   const reduced = useReducedMotion();
   useEffect(() => {
@@ -119,6 +118,10 @@ export function Header({ homeLinks = false }: { homeLinks?: boolean }) {
     if (location.hash === "#tech-stack") {
       history.replaceState(null, "", "#skill");
       document.getElementById("skill")?.scrollIntoView({ behavior: "instant" });
+    }
+    if (location.hash === "#home") {
+      history.replaceState(null, "", "#about");
+      window.scrollTo({ top: 0, behavior: "instant" });
     }
     track();
     window.addEventListener("scroll", track, { passive: true });
@@ -168,9 +171,9 @@ export function Header({ homeLinks = false }: { homeLinks?: boolean }) {
       >
         <GlassSurface className="glass-layer" width="100%" height="100%" borderRadius={999} backgroundOpacity={0.55} saturation={1.15} distortionScale={-28} greenOffset={2} blueOffset={4} />
         <a
-          href={homeLinks ? "/#home" : "#home"}
+          href={homeLinks ? "/#about" : "#about"}
           className="wordmark"
-          aria-label="Asarya — Home"
+          aria-label="Asarya — About"
           onClick={() => setMenu(false)}
         >
           <span aria-hidden="true">A</span>
@@ -192,10 +195,11 @@ export function Header({ homeLinks = false }: { homeLinks?: boolean }) {
         </a>
         <div className={`nav-links ${menu ? "is-open" : ""}`} id="navigation">
           {[
-            ["home", "Home"],
             ["about", "About"],
+            ["education", "Education"],
             ["skill", "Technology"],
             ["projects", "Projects"],
+            ["certificates", "Certificates"],
             ["contact", "Contact"],
           ].map(([id, name]) => (
             <a
@@ -255,57 +259,6 @@ export function Header({ homeLinks = false }: { homeLinks?: boolean }) {
     </header>
   );
 }
-export function Hero({ availability }: { availability: "open_to_work" | "hired" }) {
-  const { t } = useCopy();
-  return (
-    <section
-      className="hero"
-      id="home"
-      aria-labelledby="hero-title"
-    >
-      <h1 id="hero-title" className="sr-only">
-        Asarya Jachred Alotia, Software Engineer
-      </h1>
-      <div className="hero-topline container">
-        <span className="eyebrow"></span>
-        <span className="availability">
-          <i />
-          {availability === "hired" ? t("Sudah bekerja", "Hired") : t("Terbuka untuk kerja", "Open to work")}
-        </span>
-      </div>
-      <div className="name-marquee" aria-hidden="true">
-        <div className="name-track">
-          <span>ASARYA JACHRED ALOTIA&nbsp; </span>
-          <span>ASARYA JACHRED ALOTIA&nbsp; </span>
-        </div>
-      </div>
-      <Image
-        src="/images/hero.webp"
-        alt="Asarya Jachred Alotia"
-        width={1448}
-        height={1086}
-        priority
-        className="hero-portrait"
-        sizes="(max-width: 768px) 100vw, 850px"
-      />
-      <div className="hero-bottom container">
-        <div className="hero-intro">
-          <p>
-            Software
-            <br />
-            Engineer<span className="accent-period">.</span>
-          </p>
-          <span>Computer Science, BINUS University</span>
-          <a className="pill glass-action" href="#projects">
-            <GlassSurface className="glass-layer" width="100%" height="100%" borderRadius={999} backgroundOpacity={0.38} distortionScale={-18} greenOffset={2} blueOffset={4} />
-            <span>{t("Lihat proyek", "View projects")}</span>
-            <IconArrowUpRight size={19} />
-          </a>
-        </div>
-      </div>
-    </section>
-  );
-}
 function SocialLinks() {
   const { t } = useCopy();
   const [notice, setNotice] = useState("");
@@ -357,10 +310,10 @@ function SocialLinks() {
     </>
   );
 }
-export function About() {
+export function About({ availability }: { availability: "open_to_work" | "hired" }) {
   const { t } = useCopy();
   const nameRef = useRef<HTMLHeadingElement>(null);
-  const nameInView = useInView(nameRef, { once: false, amount: 0.1 });
+  const nameInView = useInView(nameRef, { once: true, amount: 0.1 });
   const reduced = useReducedMotion();
   const name = profile.name.replace(" ", "\n");
   const [typedName, setTypedName] = useState("");
@@ -378,14 +331,14 @@ export function About() {
     return () => window.clearInterval(timer);
   }, [nameInView, reduced]);
   return (
-    <section id="about" className="about section container">
+    <section id="about" className="about section container" aria-labelledby="about-title">
       <div className="about-copy">
-        <span className="eyebrow">ABOUT ME</span>
-        <h2 ref={nameRef} className="typing-name" aria-label={`${profile.name}.`}>
+        <div className="about-topline"><span className="eyebrow">ABOUT ME</span><span className="availability"><i />{availability === "hired" ? t("Sudah bekerja", "Hired") : t("Terbuka untuk kerja", "Open to work")}</span></div>
+        <h1 id="about-title" ref={nameRef} className="typing-name" aria-label={`${profile.name}.`}>
           <span aria-hidden="true" className="typing-name-text">{typedName}</span>
           {typedName === name && <span aria-hidden="true" className="accent-period">.</span>}
           <span aria-hidden="true" className="typing-cursor" />
-        </h2>
+        </h1>
         <p className="role-line">
           Computer Science Student<span>Software Engineering</span>
         </p>
@@ -409,14 +362,10 @@ export function About() {
       </div>
       <div className="lanyard-area">
         <Lanyard
-          position={[0, 0, 20]}
-          gravity={[0, -40, 0]}
-          fov={16}
           frontImage="/lanyard/front.png"
           backImage="/lanyard/back.png"
           imageFit="cover"
-          lanyardImage="/lanyard/strap.png"
-          lanyardWidth={1}
+          strapImage="/lanyard/strap.png"
         />
       </div>
     </section>
@@ -481,7 +430,6 @@ export function Contact() {
     <section id="contact" className="contact section container">
       <div className="contact-pixel" aria-hidden="true"><PixelBlast /></div>
       <Reveal className="contact-copy">
-        <span className="eyebrow">CONTACT</span>
         <h2>Let’s connect.</h2>
         <p className="body-copy">
           {t(
@@ -563,11 +511,11 @@ export function Footer({ homeLinks = false }: { homeLinks?: boolean }) {
   const { t } = useCopy();
   return (
     <footer className="footer container">
-      <a className="wordmark" href={homeLinks ? "/#home" : "#home"}>
+      <a className="wordmark" href={homeLinks ? "/#about" : "#about"}>
         Asarya
       </a>
       <p>© {new Date().getFullYear()} Asarya Jachred Alotia</p>
-      <a href={homeLinks ? "#project-content" : "#home"} className="text-link">
+      <a href={homeLinks ? "#project-content" : "#about"} className="text-link">
         {t("Kembali ke atas", "Back to top")}
         <IconArrowUp size={17} />
       </a>

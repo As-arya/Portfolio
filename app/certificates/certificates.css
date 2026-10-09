@@ -1,0 +1,25 @@
+.certificates { border-top: 1px solid var(--line); }
+.certificates-intro { margin-bottom: 56px; }
+.certificates-intro h2 { font-size: clamp(42px, 5.5vw, 76px); font-weight: 550; line-height: 1.1; letter-spacing: -.065em; }
+.certificates-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 56px 32px; }
+.certificate-image-button { position: relative; display: block; width: 100%; aspect-ratio: 1.42; padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); overflow: hidden; }
+.certificate-image-button > img { width: 100%; height: 100%; object-fit: contain; transition: transform .3s; }
+.certificate-image-button:hover > img { transform: scale(1.02); }
+.certificate-view { position: absolute; right: 16px; bottom: 16px; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); font-size: 11px; }
+.certificate-copy { padding-top: 24px; }
+.certificate-copy h2 { margin: 12px 0 14px; font-size: clamp(23px, 2.4vw, 32px); line-height: 1.25; letter-spacing: -.04em; overflow-wrap: anywhere; }
+.certificate-copy > p { font-size: 14px; line-height: 1.85; color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.certificates-empty { color: var(--muted); }
+.certificate-dialog { width: min(1100px, calc(100% - 40px)); max-height: calc(100dvh - 48px); margin: auto; padding: 36px; border: 1px solid var(--line); border-radius: 20px; background: var(--bg); color: var(--text); overflow: auto; }
+.certificate-dialog::backdrop { background: rgb(18 24 28 / .65); backdrop-filter: blur(6px); }
+.certificate-dialog-close { position: absolute; top: 18px; right: 18px; }
+.certificate-dialog h2 { padding-right: 42px; margin-bottom: 28px; font-size: clamp(23px, 3vw, 36px); overflow-wrap: anywhere; }
+.certificate-dialog > img { width: 100%; max-height: 68dvh; object-fit: contain; }
+.certificate-dialog > p { margin-top: 24px; color: var(--muted); font-size: 14px; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+  .certificates-intro { flex-direction: column; align-items: start; gap: 20px; margin-bottom: 36px; }
+  .certificates-grid { grid-template-columns: 1fr; gap: 36px; }
+  .certificate-image-button { padding: 14px; }
+  .certificate-dialog { width: calc(100% - 24px); padding: 26px 18px; }
+}
+@media (prefers-reduced-motion: reduce) { .certificate-image-button > img { transition: none; } }

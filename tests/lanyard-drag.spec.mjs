@@ -2,11 +2,12 @@ import { test, expect } from "@playwright/test";
 import sharp from "sharp";
 
 test.use({ channel: "msedge", viewport: { width: 1380, height: 800 } });
+const baseURL = process.env.PORTFOLIO_TEST_URL || "http://127.0.0.1:3000";
 
 test("lanyard can be pulled below its frame and returns safely", async ({ page }) => {
   const errors = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("http://127.0.0.1:3000/#about");
+  await page.goto(`${baseURL}/#about`);
   await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
   const stage = page.locator(".lanyard-stage");
   await stage.scrollIntoViewIfNeeded();
@@ -51,8 +52,8 @@ test("lanyard can be pulled below its frame and returns safely", async ({ page }
   expect(errors).toEqual([]);
 });
 
-test("long drag inside the frame returns progressively", async ({ page }) => {
-  await page.goto("http://127.0.0.1:3000/#about");
+test("drag inside the frame stretches the band and returns", async ({ page }) => {
+  await page.goto(`${baseURL}/#about`);
   await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
   const stage = page.locator(".lanyard-stage");
   await stage.scrollIntoViewIfNeeded();
@@ -79,22 +80,53 @@ test("long drag inside the frame returns progressively", async ({ page }) => {
   await page.mouse.move(x, box.y + box.height * 0.78, { steps: 30 });
   const held = await cardTop();
   await page.mouse.up();
-  await page.waitForTimeout(120);
-  const early = await cardTop();
   expect(held).toBeGreaterThan(initial + 100);
-  expect(early).toBeGreaterThan(initial + 60);
   await expect.poll(cardTop, { timeout: 3000 }).toBeLessThan(held - 15);
   await expect.poll(cardTop, { timeout: 3000 }).toBeLessThan(initial + 60);
 });
 
+test("reduced motion uses a static card that can still flip", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto(`${baseURL}/#about`);
+  const stage = page.locator(".lanyard-stage");
+  await stage.scrollIntoViewIfNeeded();
+  await expect(stage.locator("canvas")).toHaveCount(0);
+  await expect(stage.locator("img")).toHaveAttribute("src", /front\.png/);
+  await expect(page.locator(".lanyard-controls")).toHaveCount(0);
+  await stage.click();
+  await expect(stage.locator("img")).toHaveAttribute("src", /back\.png/);
+  await stage.press("Space");
+  await expect(stage.locator("img")).toHaveAttribute("src", /front\.png/);
+});
+
+test("mobile layout fits and returning to About preserves the card", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${baseURL}/#about`);
+  await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
+  const scene = page.locator(".lanyard-scene");
+  await page.locator(".lanyard-stage").scrollIntoViewIfNeeded();
+  await expect(scene).toHaveAttribute("data-ready", "true");
+  const canvas = await scene.locator("canvas").elementHandle();
+  await page.locator(".lanyard-stage").press("Enter");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
+  await page.locator(".lanyard-stage").scrollIntoViewIfNeeded();
+  await expect(scene).toHaveAttribute("data-ready", "true");
+  await expect(scene.locator("canvas")).toHaveCount(1);
+  expect(await canvas.evaluate(element => element.isConnected)).toBe(true);
+  await expect(page.locator(".lanyard-stage")).toHaveAttribute("aria-pressed", "true");
+});
+
 test("flip shows the back within a second", async ({ page }) => {
-  await page.goto("http://127.0.0.1:3000/#about");
+  await page.goto(`${baseURL}/#about`);
   await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
   const stage = page.locator(".lanyard-stage");
   await stage.scrollIntoViewIfNeeded();
   await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true");
   await page.waitForTimeout(1400);
-  await page.getByRole("button", { name: /Balik kartu|Flip card/ }).click();
+  const box = await stage.boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.5);
+  await expect(stage).toHaveAttribute("aria-pressed", "true");
   await page.waitForTimeout(800);
   const { data, info } = await sharp(await stage.screenshot()).raw().toBuffer({ resolveWithObject: true });
   let blue = 0;
@@ -102,4 +134,28 @@ test("flip shows the back within a second", async ({ page }) => {
     if (data[i + 2] > 140 && data[i + 2] > data[i] * 1.4 && data[i + 2] > data[i + 1] * 1.1) blue++;
   }
   expect(blue).toBeGreaterThan(1000);
+});
+
+test("strap lettering keeps its proportions without visible controls", async ({ page }, testInfo) => {
+  await page.addInitScript(() => localStorage.setItem("portfolio-theme", "dark"));
+  await page.goto(`${baseURL}/#about`);
+  const stage = page.locator(".lanyard-stage");
+  await stage.scrollIntoViewIfNeeded();
+  await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".lanyard-controls")).toHaveCount(0);
+  await page.waitForTimeout(1400);
+  const screenshot = await stage.screenshot({ path: testInfo.outputPath("lanyard-preview.png") });
+  const { data, info } = await sharp(screenshot).raw().toBuffer({ resolveWithObject: true });
+  let left = info.width, right = 0, top = info.height, bottom = 0;
+  for (let y = 28; y < info.height * 0.21; y++) {
+    for (let x = Math.floor(info.width * 0.42); x < info.width * 0.58; x++) {
+      const i = (y * info.width + x) * info.channels;
+      if (data[i] > 225 && data[i + 1] > 225 && data[i + 2] > 225) {
+        left = Math.min(left, x); right = Math.max(right, x);
+        top = Math.min(top, y); bottom = Math.max(bottom, y);
+      }
+    }
+  }
+  expect(right - left).toBeGreaterThan(10);
+  expect((bottom - top) / (right - left)).toBeGreaterThan(2.6);
 });

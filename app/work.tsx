@@ -8,7 +8,8 @@ import { useCopy } from "./preferences";
 import { profile } from "./data";
 import { Reveal } from "./sections";
 import PixelCard from "./pixel-card";
-import { ProjectActions, ProjectBlocks, ProjectGallery } from "./projects/[slug]/project-detail";
+import { ProjectActions, ProjectBlocks, ProjectGallery, ProjectStack } from "./projects/[slug]/project-detail";
+import StackTags from "./project-stack";
 import type { ProjectRecord } from "../lib/models";
 
 const PixelBlast = dynamic(() => import("./pixel-blast"), { ssr: false });
@@ -76,10 +77,8 @@ export function Projects({ projects }: { projects: ProjectRecord[] }) {
     <section id="projects" className="projects section container">
       <Reveal className="projects-heading">
         <div>
-          <span className="eyebrow">SELECTED WORK</span>
           <h2>Selected projects.</h2>
         </div>
-        <p>{t("Eksplorasi ide menjadi website dan aplikasi.", "Exploring ideas through websites and applications.")}</p>
       </Reveal>
       <div className="project-list" id="additional-projects">
         <AnimatePresence initial={false}>
@@ -105,7 +104,7 @@ export function Projects({ projects }: { projects: ProjectRecord[] }) {
                     <span className="eyebrow">{copy.category}</span>
                     <h3>{copy.title}</h3>
                     <p>{copy.summary}</p>
-                    <div className="project-tags">{project.stack.map((tag) => <span key={tag}>{tag}</span>)}</div>
+                    <StackTags tags={project.stack} />
                     <button className="detail-link" onClick={(event) => openProject(project, event.currentTarget)}>
                       {t("Lihat detail", "More detail")}
                       <IconArrowUpRight size={20} />
@@ -156,13 +155,10 @@ export function Projects({ projects }: { projects: ProjectRecord[] }) {
             </div>
           </header>
           <div className="dialog-gallery"><ProjectGallery key={view.slug} project={view} /></div>
-          <div className={`dialog-content-grid${view.stack.length ? "" : " no-meta"}`}>
-            {view.stack.length > 0 && <aside className="dialog-meta">
-              <span className="eyebrow">{t("TEKNOLOGI", "TECHNOLOGY")}</span>
-              <div className="project-tags">{view.stack.map((tag) => <span key={tag}>{tag}</span>)}</div>
-            </aside>}
+          <div className="dialog-content-grid no-meta">
             <div className="dialog-story">
               <ProjectBlocks project={view} />
+              <ProjectStack project={view} />
               <ProjectActions project={view} />
             </div>
           </div>

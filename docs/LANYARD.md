@@ -1,31 +1,23 @@
 # Lanyard
 
-Implementasi berada di `app/lanyard.tsx`, mengikuti pola rope joint dan spherical joint React Bits dari prompt yang diberikan pengguna, disesuaikan untuk Next.js dan TypeScript.
+`app/lanyard-card.tsx` berisi source Three.js React Bits dari lampiran pengguna, dengan CSS di `app/lanyard-card.css`. Wrapper `app/lanyard.tsx` menghubungkannya dengan pilihan bahasa, kontrol kartu, dan fallback. Lisensi React Bits tetap ada di `public/lanyard/REACT-BITS-LICENSE.md`.
 
-## Aset
+## Aset dan tampilan
 
-- `public/lanyard/strap.png`: desain BINUS pengguna, ditampilkan sekali dengan `repeat={[-1, 1]}`. UV digeser agar logo terlihat di bawah pangkal tali yang berada di luar frame.
-- `public/lanyard/front.png` dan `back.png`: desain pengguna, dipasang dengan perbandingan ukuran asli (cover).
-- `public/lanyard/card.glb`: model kartu. Lisensi ada di folder yang sama.
+- `public/lanyard/front.png` dan `back.png` dipasang langsung pada kedua sisi kartu dengan `imageFit="cover"`.
+- `public/lanyard/strap.png` menjadi tekstur tali BINUS. Cetakan dipusatkan dengan ruang di sisi tali. UV mengikuti panjang dan lebar tali, sehingga proporsi huruf terjaga saat tali pendek, diregangkan, atau viewport berubah. Pemetaan dan repeat mengikuti [dokumentasi tekstur Three.js](https://threejs.org/manual/en/textures.html), diperiksa melalui Context7.
+- Kartu, lubang gantungan, ring, dan penjepit dibuat secara prosedural; implementasi baru tidak memuat `card.glb`.
+- Default situs memakai finish matte dengan roughness 0.85 dan clearcoat 0, tepi hitam, logam silver, ukuran kartu 0.52, panjang tali 0.32, damping 0.7, dan breeze 0.16. Warna dasar tali `#171c22` sama dengan latar aset BINUS, sehingga bidang gambar tidak membentuk kotak berbeda warna. Tepi mengikuti finish kartu agar tidak memantulkan lapisan glossy. Props tampilan lainnya dari source tetap tersedia.
 
-Atlas kartu memakai ukuran tekstur asli model. Area di luar kedua sisi diisi warna holder gelap, lalu baris bawah gambar diperpanjang 8 piksel untuk mencegah filtering mengambil warna terang di luar UV gambar.
+## Interaksi
 
-## Animasi
+Kartu muncul dari samping saat About terlihat. Pengunjung dapat menarik, meregangkan, melepaskan, atau mengeklik kartu untuk membaliknya. Tidak ada panel kontrol di bawah kartu. Fokuskan area kartu dengan Tab, lalu tekan Enter atau Space untuk membaliknya; outline fokus hanya muncul saat memakai keyboard. Simulasi serta render berhenti ketika canvas di luar viewport atau tab tersembunyi. Geometri, material, tekstur, environment, observer, dan listener dibersihkan ketika komponen dilepas.
 
-Reset hanya disiapkan ketika scroll sudah mencapai bagian paling atas (toleransi 2 px) dan seluruh canvas berada di luar viewport. Canvas dan aset tetap terpasang. Posisi awal kartu dan tali terlipat berada di atas kamera; ketika About terlihat, semua body dibangunkan, dan pegas menarik ruas tali melewati anchor agar kartu jatuh otomatis. Pangkal tali juga berada di luar kamera, dengan transisi transparan di tepi atas canvas.
+Intro dimainkan saat kartu pertama terlihat. Kembali ke About mempertahankan canvas dan sisi kartu, sehingga tidak ada reset mendadak. `.lanyard-scene` menyediakan `data-ready` untuk pemeriksaan browser. Reduced motion atau kegagalan WebGL memakai kartu statis dengan tepi hitam yang bisa dibalik lewat klik atau keyboard.
 
-Saat ditarik, kartu bergerak secara kinematik sementara tiga ruas tali tetap disimulasikan. Spring joint memungkinkan tali meregang hingga kartu keluar dari area tampilan; rope joint membatasi tarikan ekstrem. Peredaman tinggi menjaga kartu tenang saat tidak disentuh. Tarikan yang cukup jauh memberi dorongan balik ke anchor dan menurunkan peredaman sesaat; pantulan mereda dalam 1,1 detik. Kartu miring pada dua sumbu selama drag dan membawa kecepatan linear serta angular saat dilepas. Tombol flip segera memutar kartu tanpa menunggu ayunan berhenti. Foto menggunakan material tanpa pencahayaan dan tanpa tone mapping untuk mempertahankan warna aset; klip logam tetap menerima cahaya. Preferensi reduced motion memakai kartu statis.
+## Pemeriksaan
 
-Jalankan `node tests/lanyard-motion.test.mjs` (Node.js 22.18+) untuk memeriksa batas reset dan geometri awal di luar frame.
+- `npx playwright test tests/lanyard-drag.spec.mjs --workers=1`: drag melewati frame, kembali setelah dilepas, flip, reduced motion, dan mobile.
+- Tes browser memakai server pada `http://127.0.0.1:3000` secara default; `PORTFOLIO_TEST_URL` dapat diarahkan ke port preview lain.
 
-## Pemeriksaan regresi manual
-
-1. Jalankan `npm run dev`, buka Home, lalu About. Pastikan kartu jatuh dan berhenti tergantung pada tali.
-2. Pastikan hanya ada satu BINUS di tengah tali serta tidak ada garis putih pada bagian bawah kartu.
-3. Kembali ke Home, tunggu scroll selesai, lalu buka About lagi. Animasi jatuh harus berulang tanpa memuat ulang GLB. Atribut `data-replay` pada `.lanyard-scene` bertambah ketika Home dikunjungi kembali.
-   Berhenti di tengah perjalanan ke Home: penghitung tidak boleh bertambah dan kartu tidak boleh berpindah posisi mendadak.
-4. Klik Balik kartu, kemudian Lihat depan. Tarik dan lepaskan kartu; tali harus tetap tersambung.
-   Tarik dari tepi kartu ke samping lalu lepaskan: kartu harus bisa berputar hingga sisi belakang terlihat sesaat.
-5. Dengan reduced motion aktif, kartu statis tetap bisa dibalik dan tidak menjalankan animasi jatuh.
-
-Validasi 27 September 2026: production build dan pemeriksaan TypeScript berhasil; logo tunggal, tepi bawah, kontrol balik, dan penghitung replay diperiksa di browser. Tidak ada error console yang tercatat selama pemeriksaan. Fallback reduced motion diperiksa pada kode, belum dengan emulasi preferensi browser.
+Periksa juga logo BINUS, tepi kartu, kedua sisi gambar, serta scroll sentuh di luar kartu saat mengubah prop ukuran atau panjang tali.
