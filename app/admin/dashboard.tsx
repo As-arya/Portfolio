@@ -283,11 +283,11 @@ function EducationEditor({ initial, onSaved, onBusy }: { initial: EducationRecor
               <p className="admin-muted">Logo opsional · JPEG, PNG, atau WebP · maksimal 10 MB.</p>
             </div>
             {entry.logo && <div className="admin-logo-adjustment">
-              <p className="admin-muted">Sesuaikan tampilan logo. Ukuran dipaskan agar seluruh gambar terlihat; perkecil untuk memberi ruang di tepi. Pratinjau mengikuti tampilan situs.</p>
+              <p className="admin-muted">100% menampilkan gambar penuh. Perbesar hingga 300% untuk memotong ruang kosong, atau perkecil untuk memberi ruang di tepi. Pratinjau mengikuti tampilan situs.</p>
               <div className="admin-logo-sliders">{([
-                ["scale", "Ukuran logo", 40, 100], ["x", "Posisi horizontal", 0, 50], ["y", "Posisi vertikal", 0, 50],
-              ] as const).map(([key, label, min, fallback]) => <label key={key} htmlFor={`logo-${entry.id}-${key}`}>{label} <output>{entry.logoDisplay?.[key] ?? fallback}%</output>
-                <input id={`logo-${entry.id}-${key}`} type="range" min={min} max={100} step={1} value={entry.logoDisplay?.[key] ?? fallback} onChange={event => change(index, { logoDisplay: { scale: 100, x: 50, y: 50, ...entry.logoDisplay, [key]: Number(event.target.value) } })} />
+                ["scale", "Ukuran logo", 40, 300, 100], ["x", "Posisi horizontal", 0, 100, 50], ["y", "Posisi vertikal", 0, 100, 50],
+              ] as const).map(([key, label, min, max, fallback]) => <label key={key} htmlFor={`logo-${entry.id}-${key}`}>{label} <output>{entry.logoDisplay?.[key] ?? fallback}%</output>
+                <input id={`logo-${entry.id}-${key}`} type="range" min={min} max={max} step={1} value={entry.logoDisplay?.[key] ?? fallback} onChange={event => change(index, { logoDisplay: { scale: 100, x: 50, y: 50, ...entry.logoDisplay, [key]: Number(event.target.value) } })} />
               </label>)}</div>
               <button className="admin-button subtle" onClick={() => change(index, { logoDisplay: { scale: 100, x: 50, y: 50 } })}>Reset tampilan logo</button>
             </div>}

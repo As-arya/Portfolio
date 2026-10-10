@@ -120,13 +120,13 @@ export function validateEducation(value: unknown): EducationRecord[] {
     let logoDisplay: EducationRecord["logoDisplay"];
     if (source.logoDisplay !== undefined) {
       const display = object(source.logoDisplay);
-      const percent = (value: unknown, field: string, min: number) => {
-        if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > 100) {
-          throw new HttpError(400, `${field} harus antara ${min} dan 100.`);
+      const percent = (value: unknown, field: string, min: number, max = 100) => {
+        if (typeof value !== "number" || !Number.isFinite(value) || value < min || value > max) {
+          throw new HttpError(400, `${field} harus antara ${min} dan ${max}.`);
         }
         return value;
       };
-      logoDisplay = { scale: percent(display.scale, "Ukuran logo", 40), x: percent(display.x, "Posisi horizontal", 0), y: percent(display.y, "Posisi vertikal", 0) };
+      logoDisplay = { scale: percent(display.scale, "Ukuran logo", 40, 300), x: percent(display.x, "Posisi horizontal", 0), y: percent(display.y, "Posisi vertikal", 0) };
     }
     return {
       id, institution: text(source.institution, "Institusi", 200, 1), startYear, endYear,

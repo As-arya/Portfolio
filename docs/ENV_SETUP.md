@@ -31,6 +31,16 @@ Tempel value langsung tanpa tanda petik, lalu **Save** dan buat deployment baru 
 
 Vercel menonaktifkan `require()` untuk ES Module secara default. Firebase Admin 14.5.0 memakai `jwks-rsa` yang memuat `jose` melalui `require()`, sehingga build dapat berhasil tetapi halaman/API gagal dengan `ERR_REQUIRE_ESM`. Opsi ini mengaktifkan kemampuan Node yang dibutuhkan dependensi tersebut. Menyimpan opsi hanya dalam `.env.local` tidak mengubah kemampuan proses Node yang sudah aktif. [Konfigurasi runtime Vercel](https://vercel.com/docs/functions/runtimes/node-js/advanced-node-configuration), [versi Node di Vercel](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions)
 
+### Origin aplikasi untuk login dan Contact
+
+`APP_ORIGIN` wajib tersedia pada ENV **Production** Vercel. Login admin, logout, penyimpanan konten, dan Contact memakai nilai ini untuk memeriksa asal permintaan. Jika deployment aktif tidak menerima nilai tersebut, login menampilkan **Origin aplikasi belum dikonfigurasi.**
+
+1. Buka **Project > Settings > Environment Variables**, tambahkan atau edit `APP_ORIGIN`, lalu pilih **Production**.
+2. Isi dengan origin HTTPS yang sedang dipakai di browser: protokol dan hostname, tanpa path, query, atau tanda petik. Contoh: jika halaman admin ada di `https://nama-project.vercel.app/admin/login`, nilainya `https://nama-project.vercel.app`. Jika domain sendiri sudah terhubung dan dipakai, gunakan origin domain tersebut.
+3. Klik **Save**, lalu **Deployments > deployment produksi terbaru > Redeploy**. Setelah deployment selesai, buka admin dari domain yang sama persis dengan `APP_ORIGIN` dan coba login lagi. Mengubah ENV tanpa deployment baru tidak memperbarui nilai pada server yang sedang berjalan. [Pengaturan ENV Vercel](https://vercel.com/docs/environment-variables/managing-environment-variables)
+
+Jangan memakai URL dashboard `vercel.com`, menambahkan `/admin`, atau mengubah nama menjadi `NEXT_PUBLIC_APP_ORIGIN`. Nilai hanya berlaku untuk satu origin; akses dari domain lain akan ditolak. Gunakan domain produksi yang stabil dan arahkan alias domain ke domain tersebut.
+
 ## 2. Firebase Web, Admin, dan database
 
 Di [Firebase Console](https://console.firebase.google.com/), pilih atau buat project, lalu:
@@ -130,6 +140,7 @@ Jalankan `npm run check` dan `npm run build`, kemudian `npm run dev`. Buka alama
 
 - **Admin utama:** login Email/Password membuka dashboard.
 - **Education:** ubah **Judul bagian materi (Indonesia)**, beralih ke **English** untuk mengubah judul Inggris, lalu klik **Simpan pendidikan**. Muat ulang situs dan cek kedua bahasa. Judul kosong memakai teks bawaan; judul tampil jika daftar materi berisi entri.
+- **Logo pendidikan:** atur **Ukuran logo** dari 40% hingga 300%. Zoom di atas 100% memotong tampilan pada batas kotak logo; sesuaikan posisi horizontal/vertikal, lalu klik **Simpan pendidikan**. **Reset tampilan logo** mengembalikan ukuran 100% dan posisi tengah.
 - **Upload:** unggah logo atau sertifikat, simpan, dan cek gambar pada situs.
 - **Contact:** kirim pesan uji setelah widget siap. Cek pesan di admin dan notifikasi di Gmail utama. Jika status email gagal, perbaiki Gmail lalu gunakan **Kirim ulang email**.
 - **Cadangan:** login email dan kata sandi membuka halaman pemulihan. Tautan dibuat saat tombol ditekan dan ditampilkan langsung; akun ini tidak dapat mengakses konten admin. Selama 15 menit, tombol mengambil tautan yang sama setelah halaman dimuat ulang; setelah itu tautan baru dapat dibuat.
@@ -149,6 +160,7 @@ Untuk port lain, atur `$env:PORTFOLIO_TEST_URL='http://127.0.0.1:3001'` sebelum 
 | Gejala | Periksa |
 | --- | --- |
 | Build berhasil, halaman 500 dengan `ERR_REQUIRE_ESM` dari `jwks-rsa`/`jose` | Gunakan Node 24.x, tambahkan `NODE_OPTIONS=--experimental-require-module` pada ENV Vercel untuk environment deployment, lalu Redeploy |
+| Login menampilkan **Origin aplikasi belum dikonfigurasi.** | Isi `APP_ORIGIN` pada ENV Production sesuai origin domain yang diakses, Save, lalu Redeploy; lihat bagian Origin aplikasi untuk login dan Contact |
 | Firebase belum dikonfigurasi | Nilai Web Firebase, lokasi `.env.local`, dan restart server |
 | Private key / PEM tidak valid | Kunci lengkap, tanda kutip ganda, dan `\n` dari JSON |
 | Akun ini tidak memiliki akses | UID, email, dan cara login sesuai peran utama/cadangan |

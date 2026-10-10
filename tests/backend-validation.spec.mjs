@@ -77,10 +77,13 @@ test("sample education and certificates are valid editable records", () => {
 
 test("education logo display survives validation and rejects unsafe ranges", () => {
   const entry = { ...sampleEducation[0], logoDisplay: { scale: 75, x: 0, y: 100 } };
-  expect(validateEducation([entry])[0].logoDisplay).toEqual(entry.logoDisplay);
+  for (const scale of [40, 75, 100, 175, 300]) {
+    const logoDisplay = { ...entry.logoDisplay, scale };
+    expect(validateEducation([{ ...entry, logoDisplay }])[0].logoDisplay).toEqual(logoDisplay);
+  }
   expect(validateEducation([{ ...entry, logo: null }])[0].logoDisplay).toBeUndefined();
   for (const logoDisplay of [
-    null, { scale: 39, x: 50, y: 50 }, { scale: 101, x: 50, y: 50 },
+    null, { scale: 39, x: 50, y: 50 }, { scale: 301, x: 50, y: 50 }, { scale: 300.01, x: 50, y: 50 },
     { scale: 75, x: -1, y: 50 }, { scale: 75, x: 50, y: 101 },
     { scale: "75", x: 50, y: 50 }, { scale: NaN, x: 50, y: 50 },
     { scale: 75, x: Infinity, y: 50 }, { scale: 75, x: 50 },
