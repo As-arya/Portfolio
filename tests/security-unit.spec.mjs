@@ -7,9 +7,22 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnSync } from "node:child_process";
+import { parseEnv } from "node:util";
 import { HttpError, jsonBody, requestOrigin, sameOrigin } from "../lib/http";
 import { cell } from "../lib/csv";
 import { verifyTurnstile } from "../lib/turnstile";
+
+test("Firebase Admin loads with the documented Vercel Node runtime options", () => {
+  const { NODE_OPTIONS } = parseEnv(readFileSync(new URL("../.env.example", import.meta.url), "utf8"));
+  const result = spawnSync(process.execPath, ["-e", "require('firebase-admin/auth'); require('firebase-admin/firestore');"], {
+    cwd: fileURLToPath(new URL("..", import.meta.url)),
+    // Exercise a runtime with ESM require disabled before applying the documented option.
+    env: { ...process.env, NODE_OPTIONS: ["--no-experimental-require-module", NODE_OPTIONS].filter(Boolean).join(" ") },
+    encoding: "utf8",
+    timeout: 15_000,
+  });
+  expect(result.status, result.error?.message || result.stderr).toBe(0);
+});
 
 function env(values) {
   const previous = Object.fromEntries(Object.keys(values).map(key => [key, process.env[key]]));

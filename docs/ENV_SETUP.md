@@ -19,6 +19,18 @@ Jika berkas sudah ada, lengkapi nilai kosong tanpa menimpa konfigurasi yang teri
 
 Variabel `NEXT_PUBLIC_` bisa dibaca browser. Private key, Cloudinary API secret, App Password, dan Turnstile secret harus tetap memakai nama server di template. Setelah mengubah ENV, hentikan server dengan Ctrl+C lalu jalankan lagi `npm run dev`. Untuk produksi, build ulang sebelum `npm run start`: nilai publik dimasukkan saat build. [Dokumentasi ENV Next.js](https://nextjs.org/docs/app/guides/environment-variables)
 
+### Runtime Vercel
+
+`package.json` menetapkan Node.js `24.x` untuk build dan runtime Vercel. Di **Project > Settings > Environment Variables**, tambahkan konfigurasi berikut untuk **Production** dan **Preview**:
+
+| Name | Value |
+| --- | --- |
+| `NODE_OPTIONS` | `--experimental-require-module` |
+
+Tempel value langsung tanpa tanda petik, lalu **Save** dan buat deployment baru (**Redeploy** atau push ke branch produksi). Mengubah ENV tidak memperbarui proses deployment yang sudah berjalan. Nama variabel `NEXT_PUBLIC_*` tetap harus sesuai template.
+
+Vercel menonaktifkan `require()` untuk ES Module secara default. Firebase Admin 14.5.0 memakai `jwks-rsa` yang memuat `jose` melalui `require()`, sehingga build dapat berhasil tetapi halaman/API gagal dengan `ERR_REQUIRE_ESM`. Opsi ini mengaktifkan kemampuan Node yang dibutuhkan dependensi tersebut. Menyimpan opsi hanya dalam `.env.local` tidak mengubah kemampuan proses Node yang sudah aktif. [Konfigurasi runtime Vercel](https://vercel.com/docs/functions/runtimes/node-js/advanced-node-configuration), [versi Node di Vercel](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions)
+
 ## 2. Firebase Web, Admin, dan database
 
 Di [Firebase Console](https://console.firebase.google.com/), pilih atau buat project, lalu:
@@ -136,6 +148,7 @@ Untuk port lain, atur `$env:PORTFOLIO_TEST_URL='http://127.0.0.1:3001'` sebelum 
 
 | Gejala | Periksa |
 | --- | --- |
+| Build berhasil, halaman 500 dengan `ERR_REQUIRE_ESM` dari `jwks-rsa`/`jose` | Gunakan Node 24.x, tambahkan `NODE_OPTIONS=--experimental-require-module` pada ENV Vercel untuk environment deployment, lalu Redeploy |
 | Firebase belum dikonfigurasi | Nilai Web Firebase, lokasi `.env.local`, dan restart server |
 | Private key / PEM tidak valid | Kunci lengkap, tanda kutip ganda, dan `\n` dari JSON |
 | Akun ini tidak memiliki akses | UID, email, dan cara login sesuai peran utama/cadangan |

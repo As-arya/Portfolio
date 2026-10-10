@@ -16,6 +16,8 @@ Gunakan folder **Portfolio** sebagai root repository. Folder induk `Porto` juga 
 
 Folder dependency/cache/hasil tes yang sudah ada dan `.env.local` diberi atribut Hidden di Windows agar folder kerja lebih ringkas. Atribut Hidden hanya memengaruhi tampilan Explorer; perlindungan upload lewat Git tetap berasal dari `.gitignore`.
 
+Biarkan file cache `tsconfig.tsbuildinfo` tanpa atribut Hidden: TypeScript perlu menimpanya, dan file Hidden dapat menyebabkan EPERM di Windows. File ini tetap dikecualikan oleh `.gitignore`.
+
 ## Upload melalui Git
 
 Dari folder `Portfolio`, periksa daftar file terlebih dahulu:

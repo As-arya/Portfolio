@@ -29,6 +29,7 @@ Tanggal: **10 Oktober 2026 (Asia/Bangkok)**. Target: source dan build produksi l
 | DEPLOY-01 | Origin dan CAPTCHA produksi belum dikonfigurasi | `check:deploy` saat audit gagal karena APP_ORIGIN belum diisi dan kedua kunci Turnstile masih kunci tes. Isi origin HTTPS domain yang benar, pasangkan kunci produksi, daftarkan domain, dan build ulang. | not done — perlu konfigurasi domain |
 | STRIX-01 | Pentest Strix belum dapat dijalankan | Panggilan daftar repository/domain berulang mengembalikan “Authentication for Strix was requested and accepted. Retry this tool call now.” termasuk setelah restart. Tidak ada scan ID atau hasil pentest yang diterima. Perlu memperbaiki koneksi, lalu scan/retest snapshot kode akhir dan target staging milik sendiri. | blocked — autentikasi plugin |
 | DEPLOY-02 | Pengujian positif pada konfigurasi staging akhir | Login primary/backup nyata, cookie HTTPS, upload dengan signature baru, pengiriman Contact memakai CAPTCHA produksi dan Gmail, serta recovery nyata belum diulang dalam audit ini. Tes mock/negatif lokal tidak menggantikan langkah tersebut. | not done — target/konfigurasi akhir |
+| DEPLOY-03 | Build Vercel berhasil tetapi server gagal memuat Firebase Admin | Log GET `/` menunjukkan `ERR_REQUIRE_ESM`: `jwks-rsa` memuat `jose` lewat `require()`, sementara Vercel menonaktifkan dukungan ESM require secara default. Repo kini menetapkan Node 24.x, template ENV mencantumkan `NODE_OPTIONS=--experimental-require-module`, dan panduan Vercel serta tes pemuatan Firebase Admin asli ditambahkan. Opsi harus diterapkan pada ENV hosting sebelum proses Node dimulai. | done — repo dan tes lokal; not done — ENV/retest Vercel |
 
 ## Bukti verifikasi
 
@@ -36,7 +37,7 @@ Tanggal: **10 Oktober 2026 (Asia/Bangkok)**. Target: source dan build produksi l
 | --- | --- |
 | Audit dependency registry npm | 0 kerentanan akhir; 7 entri high sebelum perbaikan |
 | TypeScript dan build produksi Next.js 16.4.0 | Lulus |
-| Unit keamanan, validasi backend, recovery | 26 tes lulus |
+| Unit keamanan, validasi backend, recovery | 27 tes lulus, termasuk regresi pemuatan Firebase Admin asli dengan opsi runtime Vercel |
 | HTTP/browser keamanan dan akses admin pada next start | 7 tes lulus |
 | Regresi UI: animasi, Certificates, glass, gradient, lanyard, public content, tema | 16 tes lulus pada build akhir; tes deteksi kartu diperbaiki |
 | Regresi Node navigation dan GitHub parser | 2 pemeriksaan lulus |
@@ -45,6 +46,16 @@ Tanggal: **10 Oktober 2026 (Asia/Bangkok)**. Target: source dan build produksi l
 | Guard ENV sebelum deploy | Gagal sesuai harapan pada konfigurasi lokal yang belum siap |
 
 Permintaan HTTP Contact pada audit ini memakai input tidak valid/token tidak terverifikasi dan ditolak. Tidak ada pesan Contact baru, upload baru, penggantian password, deploy, push, atau perubahan konfigurasi layanan cloud yang dilakukan.
+
+### Verifikasi perbaikan runtime Vercel (10 Oktober 2026)
+
+- `node --no-experimental-require-module -e "require('firebase-admin/auth')"` mereproduksi `ERR_REQUIRE_ESM` yang sama dengan log Vercel.
+- Tes baru memulai child process dengan ESM require dimatikan, lalu menerapkan `NODE_OPTIONS` dari `.env.example`; pemuatan Firebase Admin Auth dan Firestore asli berhasil tanpa mock.
+- `npm run check`, `npm run build`, dan 27 tes keamanan/validasi/recovery lulus. Tes regresi runtime diulang setelah memastikan baseline ESM dimatikan.
+- Build akhir dijalankan dengan `NODE_OPTIONS=--experimental-require-module`, `APP_ORIGIN=http://127.0.0.1:3010`, dan konfigurasi Firebase lokal aktif. GET `/` dan `/admin/login` menghasilkan 200; GET `/api/admin/session` tanpa sesi menghasilkan 401. Ketujuh tes HTTP/browser keamanan dan akses admin lulus.
+- Pengujian HTTP awal terhalang isolasi jaringan sandbox; dijalankan ulang di luar sandbox. Percobaan dengan Firebase sengaja dinonaktifkan menghasilkan satu kegagalan tes token login karena kredensial tidak tersedia; hasil akhir di atas memakai konfigurasi Firebase aktif.
+- Atribut Hidden pada cache lokal `tsconfig.tsbuildinfo` dilepas karena menyebabkan EPERM saat TypeScript memperbarui cache di Windows. Cache tetap diabaikan Git.
+- ENV Vercel belum diubah dari sesi ini. Tambahkan `NODE_OPTIONS` untuk Production/Preview sesuai [panduan ENV](ENV_SETUP.md#runtime-vercel), buat deployment baru dari `main`, lalu ulangi akses homepage dan pemeriksaan Runtime Logs. Status cloud belum boleh dianggap selesai berdasarkan hasil lokal.
 
 ## Selesaikan sebelum deploy publik
 
@@ -55,6 +66,7 @@ Permintaan HTTP Contact pada audit ini memakai input tidak valid/token tidak ter
 5. Perbaiki koneksi Strix dan jalankan code review atas snapshot akhir atau pentest pada staging yang terverifikasi. Tutup temuan yang relevan, lalu retest. Saat ini langkah ini **belum lulus**.
 6. Aktifkan TTL `expiresAt` untuk collection group security agar marker rate limit email dibersihkan otomatis. Tanpa TTL, rate limit tetap berfungsi, tetapi marker email lama akan bertambah. Jangan menambahkan TTL pada dokumen kontak yang ingin disimpan.
 7. Pastikan rules Firestore deny-all tetap terpasang pada project produksi. Atur batas trafik/WAF dan budget alert pada hosting/layanan sesuai penggunaan; batas Contact aplikasi mulai bekerja setelah Siteverify lolos.
+8. Untuk Vercel, gunakan Node 24.x dan tambahkan `NODE_OPTIONS=--experimental-require-module` pada ENV Production/Preview. Buat deployment baru, pastikan homepage berstatus 200 dan Runtime Logs tidak lagi memuat error `ERR_REQUIRE_ESM`.
 
 Untuk pengujian lokal: jalankan `APP_ORIGIN=http://127.0.0.1:3010` pada proses `npm run start -- -p 3010`, lalu set `PORTFOLIO_TEST_URL=http://127.0.0.1:3010` pada proses tes. Kunci Turnstile tes hanya untuk next dev; positive Contact pada next start memerlukan kunci produksi yang cocok.
 
@@ -71,3 +83,4 @@ Belum dilakukan: pentest eksternal Strix, load/DDoS test, review IAM/service acc
 - [Cloudflare Siteverify](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/) dan [kunci tes](https://developers.cloudflare.com/turnstile/troubleshooting/testing/).
 - [Firebase session cookies dan persistence client](https://firebase.google.com/docs/auth/admin/manage-cookies).
 - [Cloudinary upload presets](https://cloudinary.com/documentation/upload_presets).
+- [Vercel ESM require dan NODE_OPTIONS](https://vercel.com/docs/functions/runtimes/node-js/advanced-node-configuration) serta [versi Node.js Vercel](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions).
