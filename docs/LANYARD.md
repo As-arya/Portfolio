@@ -11,22 +11,23 @@
 
 ## Interaksi
 
-Gambar kartu tampil sejak HTML awal tersedia, kemudian digantikan kartu 3D pada posisi tergantung setelah tekstur dan shader siap. Pengunjung dapat menarik, meregangkan, melepaskan, atau mengeklik kartu untuk membaliknya. Tidak ada panel kontrol di bawah kartu. Fokuskan area kartu dengan Tab, lalu tekan Enter atau Space untuk membaliknya; outline fokus hanya muncul saat memakai keyboard. Simulasi serta render berhenti ketika canvas di luar viewport atau tab tersembunyi. Geometri, material, tekstur, environment, observer, dan listener dibersihkan ketika komponen dilepas.
+Gambar kartu tampil sejak HTML awal tersedia, kemudian digantikan animasi kartu 3D setelah tekstur dan shader siap. Pengunjung dapat menarik, meregangkan, melepaskan, atau mengeklik kartu untuk membaliknya. Tidak ada panel kontrol di bawah kartu. Fokuskan area kartu dengan Tab, lalu tekan Enter atau Space untuk membaliknya; outline fokus hanya muncul saat memakai keyboard. Simulasi serta render berhenti ketika canvas di luar viewport atau tab tersembunyi. Geometri, material, tekstur, environment, observer, dan listener dibersihkan ketika komponen dilepas.
 
-Default situs memakai `intro={true}`. Kartu mulai sedikit lebih tinggi dengan tali kendur, lalu jatuh dan menetap di posisi menggantung; posisi awal tetap di dalam frame. Animasi dimulai setelah tekstur/shader siap dan frame pertama berisi foto ditampilkan. Kembali ke About mempertahankan canvas dan sisi kartu, sehingga intro tidak diulang. `.lanyard-scene` menyediakan `data-ready` untuk pemeriksaan browser. Reduced motion, kegagalan WebGL, atau kegagalan tekstur memakai kartu statis dengan tepi hitam yang bisa dibalik lewat klik atau keyboard.
+Default situs memakai `intro={true}` dengan pose awal asli: tali horizontal dan kartu miring 90 derajat, kemudian jatuh/berayun ke posisi tengah. GPU dipersiapkan pada pose menggantung di balik gambar loading; intro baru dimulai setelah pergantian ke canvas. Ketika lanyard kembali masuk viewport pada About, intro diputar ulang dengan canvas dan tekstur yang sama. Target sisi depan/belakang tetap dipertahankan. `.lanyard-scene` menyediakan `data-ready` untuk pemeriksaan browser. Reduced motion, kegagalan WebGL, atau kegagalan tekstur memakai kartu statis dengan tepi hitam yang bisa dibalik lewat klik atau keyboard.
 
 ## Loading (13 Oktober 2026)
 
 - Wrapper ringan dirender server; hanya renderer Three.js yang diimpor melalui `next/dynamic` dengan `ssr: false`. Gambar depan dipreload dan memakai URL aset yang sama dengan tekstur 3D.
-- Canvas disembunyikan dan gambar kartu tetap terlihat sampai seluruh tekstur yang diminta tersedia, `compileAsync` selesai, dan frame pertama sudah dirender. Animasi tidak berjalan sebelum tekstur siap.
+- Thumbnail depan/belakang 64px ditanam pada HTML melalui `app/lanyard-previews.ts` (total module 4.106 byte), sehingga kunjungan tanpa cache atau JavaScript tetap memperlihatkan foto ketika aset depan masih diunduh. Gambar depan yang gagal beralih ke thumbnail tersebut. Perbarui kedua thumbnail saat mengganti aset kartu.
+- Canvas disembunyikan dan gambar kartu tetap terlihat sampai seluruh gambar selesai `decode()`, tekstur diunggah lewat `initTexture()`, `compileAsync` selesai, dan satu frame sudah dirender pada pose menggantung. Buffer frame dipertahankan saat pergantian; status ready diterapkan sinkron sebelum memulai intro. Animasi tidak berjalan sebelum tahap ini selesai.
 - Gambar gagal atau belum selesai setelah 15 detik tidak dianggap siap; renderer kembali ke gambar kartu. Callback dari renderer yang sudah dilepas diabaikan.
 - Total aset turun dari **1.054.298 byte** menjadi **481.386 byte** (54% lebih kecil). Perbandingan buffer RGBA memastikan gambar depan, belakang, dan tali tidak berubah.
-- Alur ini mengikuti [Next.js lazy loading](https://nextjs.org/docs/app/guides/lazy-loading), [preload gambar](https://nextjs.org/docs/app/api-reference/components/image#preload), dan [Three.js compileAsync](https://github.com/mrdoob/three.js/blob/dev/docs/pages/WebGLRenderer.html), diperiksa melalui Context7 serta dokumentasi/implementasi paket terpasang.
+- Alur ini mengikuti [Next.js lazy loading](https://nextjs.org/docs/app/guides/lazy-loading), [preload gambar](https://nextjs.org/docs/app/api-reference/components/image#preload), dan [Three.js initTexture/compileAsync serta preserveDrawingBuffer](https://threejs.org/docs/pages/WebGLRenderer.html), diperiksa melalui Context7 serta dokumentasi/implementasi paket terpasang.
 
 ## Pemeriksaan
 
 - `npx playwright test tests/lanyard-drag.spec.mjs --workers=1`: drag melewati frame, kembali setelah dilepas, flip, reduced motion, dan mobile.
-- `npx playwright test tests/lanyard-loading.spec.mjs --workers=1`: gambar sebelum JavaScript, tekstur lambat, isi kartu pada frame 3D pertama, tekstur gagal, serta gerakan jatuh dengan foto tetap terlihat pada desktop/mobile.
+- `npx playwright test tests/lanyard-loading.spec.mjs --workers=1`: foto pada cache kosong ketika gambar depan ditahan dan JavaScript mati, fallback gambar depan gagal, decode tertunda, tekstur lambat/gagal, foto setelah intro, serta gerakan masuk asli dan replay tanpa unduhan tekstur/remount canvas pada desktop/mobile.
 - Tes browser memakai server pada `http://127.0.0.1:3000` secara default; `PORTFOLIO_TEST_URL` dapat diarahkan ke port preview lain.
 
 Periksa juga logo BINUS, tepi kartu, kedua sisi gambar, serta scroll sentuh di luar kartu saat mengubah prop ukuran atau panjang tali.

@@ -376,7 +376,7 @@ const loadImage = (
     const timeout = window.setTimeout(() => finish(null), 15_000);
     image.crossOrigin = 'anonymous';
     image.decoding = 'async';
-    image.onload = () => finish(image);
+    image.onload = () => image.decode().then(() => finish(image), () => finish(null));
     image.onerror = () => finish(null);
     image.src = url;
   });
@@ -750,11 +750,11 @@ const placeHanging = (sim: Simulation, layout: CardLayout, intro: boolean) => {
   nodes[0].copy(anchor);
   for (let i = 1; i <= JOINTS; i++) {
     nodes[i].copy(nodes[i - 1]);
-    // A slack strap lets the card drop while staying inside the frame.
-    nodes[i].y -= sim.rest * (intro ? 0.2 : 1);
+    if (intro) nodes[i].x += sim.rest;
+    else nodes[i].y -= sim.rest;
   }
   body.quaternion.identity();
-  if (intro) body.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.12);
+  if (intro) body.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
   body.hang.set(0, layout.hangY, 0);
   const offset = scratch.a.copy(body.hang).applyQuaternion(body.quaternion);
   body.position.copy(nodes[JOINTS]).sub(offset);
@@ -950,7 +950,8 @@ const Lanyard = ({
 
     let renderer: THREE.WebGLRenderer;
     try {
-      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      // Retain the prepared frame while React switches from the loading preview.
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true, powerPreference: 'high-performance' });
     } catch {
       callbacksRef.current.onFailure?.();
       return undefined;
@@ -1070,7 +1071,9 @@ const Lanyard = ({
     let press: Press | null = null;
     let imageToken = 0;
     let texturesReady = false;
+    let presentationReady = false;
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    let introPending = settingsRef.current!.intro && !reducedMotion;
 
     const paintFaces = () => {
       const s = settingsRef.current!;
@@ -1148,7 +1151,7 @@ const Lanyard = ({
       if (framingKey !== applied.framingKey) {
         frameView();
         if (!placed) {
-          placeHanging(sim, layout, s.intro && !reducedMotion);
+          placeHanging(sim, layout, false);
           placed = true;
         } else if (layoutKey !== applied.layoutKey) {
           placeHanging(sim, layout, false);
@@ -1174,6 +1177,7 @@ const Lanyard = ({
           images.strap = strap;
           paintFaces();
           repaintStrap();
+          for (const texture of [frontTexture, backTexture, strapTexture, grain, weave]) renderer.initTexture(texture);
           await renderer.compileAsync(scene, camera);
           if (!alive || token !== imageToken) return;
           texturesReady = true;
@@ -1181,7 +1185,14 @@ const Lanyard = ({
           requestAnimationFrame(() => {
             if (alive && token === imageToken) {
               callbacksRef.current.onReady?.();
-              start();
+              presentationReady = true;
+              if (introPending) {
+                introPending = false;
+                playIntro();
+              } else {
+                render();
+                start();
+              }
             }
           });
         }).catch(() => {
@@ -1356,10 +1367,19 @@ const Lanyard = ({
     };
 
     const start = () => {
-      if (raf || !visible || document.hidden || !alive || !texturesReady) return;
+      if (raf || !visible || document.hidden || !alive || !texturesReady || !presentationReady) return;
       sim.calm = 0;
       last = performance.now();
       raf = requestAnimationFrame(tick);
+    };
+
+    const playIntro = () => {
+      const turn = sim.turn;
+      sim.grab = null;
+      placeHanging(sim, layout, true);
+      sim.turn = turn;
+      render();
+      start();
     };
 
     const raycaster = new THREE.Raycaster();
@@ -1483,8 +1503,12 @@ const Lanyard = ({
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(container);
     const intersectionObserver = new IntersectionObserver(([entry]) => {
+      const wasVisible = visible;
       visible = entry.isIntersecting;
-      if (visible) start();
+      if (visible) {
+        if (!wasVisible && presentationReady && settingsRef.current!.intro && !reducedMotion) playIntro();
+        else start();
+      }
     });
     intersectionObserver.observe(container);
     const onVisibility = () => {

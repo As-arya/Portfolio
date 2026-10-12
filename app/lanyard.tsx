@@ -3,8 +3,10 @@
 import { Component, useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
+import { flushSync } from "react-dom";
 import type { LanyardProps } from "./lanyard-card";
 import { useCopy } from "./preferences";
+import { frontPreview, backPreview } from "./lanyard-previews";
 
 const LanyardCard = dynamic(() => import("./lanyard-card"), { ssr: false });
 
@@ -29,6 +31,7 @@ export default function Lanyard({
   const [flipped, setFlipped] = useState(false);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [previewOnly, setPreviewOnly] = useState(false);
 
   useEffect(() => {
     const query = matchMedia("(prefers-reduced-motion: reduce)");
@@ -42,7 +45,8 @@ export default function Lanyard({
     return () => { observer.disconnect(); query.removeEventListener("change", change); };
   }, []);
 
-  const fallback = <div className="lanyard-static"><div className="static-strap" /><Image src={flipped ? backImage : frontImage} width={256} height={384} unoptimized preload={!flipped} alt={flipped ? t("Stiker teknologi", "Technology stickers") : "Asarya Jachred Alotia"} /></div>;
+  const preview = flipped ? backPreview : frontPreview;
+  const fallback = <div className="lanyard-static"><div className="static-strap" /><Image src={previewOnly ? preview : flipped ? backImage : frontImage} placeholder={preview} onError={() => setPreviewOnly(true)} width={256} height={384} unoptimized preload={!flipped} alt={flipped ? t("Stiker teknologi", "Technology stickers") : "Asarya Jachred Alotia"} /></div>;
 
   return <div className="lanyard-scene" ref={host} data-ready={ready}>
     <div className="lanyard-stage" role="button" tabIndex={0} aria-pressed={flipped}
@@ -55,7 +59,7 @@ export default function Lanyard({
       {!reduced && !failed && loaded && <SceneBoundary fallback={null} onFailure={() => setFailed(true)}>
         <LanyardCard frontImage={frontImage} backImage={backImage} strapImage={strapImage}
           size={0.52} strapLength={0.32} strapWidth={0.65} strapColor="#171c22" damping={0.7} breeze={0.16} finish="matte" cardColor="#111111" intro={true}
-          {...props} flipped={flipped} onFlip={setFlipped} onReady={() => setReady(true)} onFailure={() => setFailed(true)} />
+          {...props} flipped={flipped} onFlip={setFlipped} onReady={() => flushSync(() => setReady(true))} onFailure={() => setFailed(true)} />
       </SceneBoundary>}
       {!ready && !failed && !reduced && loaded && <span className="scene-loading" role="status">{t("Memuat lanyard...", "Loading lanyard...")}</span>}
     </div>
