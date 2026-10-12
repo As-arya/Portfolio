@@ -329,7 +329,7 @@ export function About({ availability }: { availability: "open_to_work" | "hired"
   return (
     <section id="about" className="about section container" aria-labelledby="about-title">
       <div className="about-copy">
-        <div className="about-topline"><span className="eyebrow">ABOUT ME</span><span className="availability"><i />{availability === "hired" ? t("Sudah bekerja", "Hired") : t("Terbuka untuk kerja", "Open to work")}</span></div>
+        <div className="about-topline"><span className="eyebrow">ABOUT ME</span><span className="availability"><i />{availability === "hired" ? t("Sudah bekerja", "Hired") : "Open to work"}</span></div>
         <h1 id="about-title" ref={nameRef} className="typing-name" aria-label={`${profile.name}.`}>
           <span aria-hidden="true" className="typing-name-text">{typedName}</span>
           {typedName === name && <span aria-hidden="true" className="accent-period">.</span>}
@@ -434,16 +434,19 @@ export function Contact({ nonce }: { nonce?: string }) {
             "Have a project, an opportunity, or just want to say hello? I’d love to hear from you.",
           )}
         </p>
-        <a
-          className="text-link"
-          href={profile.github}
-          target="_blank"
-          rel="noreferrer"
-        >
-          <IconBrandGithub size={20} />
-          github.com/As-arya
-          <IconArrowUpRight size={18} />
-        </a>
+        <div className="contact-links">
+          {[
+            { name: "GitHub", url: profile.github, label: "github.com/As-arya", Icon: IconBrandGithub },
+            { name: "Instagram", url: profile.instagram, label: "instagram.com/ary_alotia", Icon: IconBrandInstagram },
+            { name: "LinkedIn", url: profile.linkedin, label: "linkedin.com/in/asarya-alotia-29i", Icon: IconBrandLinkedin },
+          ].map(({ name, url, label, Icon }) => (
+            <a key={name} className="text-link" href={url} target="_blank" rel="noreferrer" aria-label={name}>
+              <Icon size={20} />
+              {label}
+              <IconArrowUpRight size={18} />
+            </a>
+          ))}
+        </div>
       </Reveal>
       <form onSubmit={submit} className="contact-form">
         <label>

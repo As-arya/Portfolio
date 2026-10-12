@@ -43,6 +43,8 @@ Jangan memakai URL dashboard `vercel.com`, menambahkan `/admin`, atau mengubah n
 
 Untuk memeriksa perubahan konten dan kode terbaru, gunakan **Production Domain** dari **Project > Settings > Domains**. URL berbentuk `nama-project-hash-team.vercel.app` menunjuk ke satu deployment tertentu dan tetap memakai kode versi itu, meskipun database kontennya sudah diperbarui. Setelah menyimpan pendidikan, buka ulang domain produksi dan reload halaman utama. [Jenis URL deployment Vercel](https://vercel.com/docs/deployments/generated-urls)
 
+Persiapan domain Hostinger `asaryaalotia.com`, record DNS project, dan urutan perpindahan origin dicatat di [DOMAIN_DEPLOY.md](DOMAIN_DEPLOY.md). Ubah APP_ORIGIN ke domain sendiri setelah DNS dan HTTPS siap, lalu redeploy.
+
 ## 2. Firebase Web, Admin, dan database
 
 Di [Firebase Console](https://console.firebase.google.com/), pilih atau buat project, lalu:

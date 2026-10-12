@@ -750,11 +750,11 @@ const placeHanging = (sim: Simulation, layout: CardLayout, intro: boolean) => {
   nodes[0].copy(anchor);
   for (let i = 1; i <= JOINTS; i++) {
     nodes[i].copy(nodes[i - 1]);
-    if (intro) nodes[i].x += sim.rest;
-    else nodes[i].y -= sim.rest;
+    // A slack strap lets the card drop while staying inside the frame.
+    nodes[i].y -= sim.rest * (intro ? 0.2 : 1);
   }
   body.quaternion.identity();
-  if (intro) body.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), Math.PI / 2);
+  if (intro) body.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), 0.12);
   body.hang.set(0, layout.hangY, 0);
   const offset = scratch.a.copy(body.hang).applyQuaternion(body.quaternion);
   body.position.copy(nodes[JOINTS]).sub(offset);
@@ -1178,9 +1178,11 @@ const Lanyard = ({
           if (!alive || token !== imageToken) return;
           texturesReady = true;
           render();
-          start();
           requestAnimationFrame(() => {
-            if (alive && token === imageToken) callbacksRef.current.onReady?.();
+            if (alive && token === imageToken) {
+              callbacksRef.current.onReady?.();
+              start();
+            }
           });
         }).catch(() => {
           if (alive && token === imageToken) callbacksRef.current.onFailure?.();

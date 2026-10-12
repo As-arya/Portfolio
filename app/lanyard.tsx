@@ -54,7 +54,7 @@ export default function Lanyard({
       {(!ready || reduced || failed || !loaded) && fallback}
       {!reduced && !failed && loaded && <SceneBoundary fallback={null} onFailure={() => setFailed(true)}>
         <LanyardCard frontImage={frontImage} backImage={backImage} strapImage={strapImage}
-          size={0.52} strapLength={0.32} strapWidth={0.65} strapColor="#171c22" damping={0.7} breeze={0.16} finish="matte" cardColor="#111111" intro={false}
+          size={0.52} strapLength={0.32} strapWidth={0.65} strapColor="#171c22" damping={0.7} breeze={0.16} finish="matte" cardColor="#111111" intro={true}
           {...props} flipped={flipped} onFlip={setFlipped} onReady={() => setReady(true)} onFailure={() => setFailed(true)} />
       </SceneBoundary>}
       {!ready && !failed && !reduced && loaded && <span className="scene-loading" role="status">{t("Memuat lanyard...", "Loading lanyard...")}</span>}

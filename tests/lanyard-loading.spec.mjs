@@ -4,6 +4,36 @@ import sharp from "sharp";
 test.use({ channel: "msedge", viewport: { width: 1380, height: 800 }, reducedMotion: "no-preference" });
 const baseURL = process.env.PORTFOLIO_TEST_URL || "http://127.0.0.1:3000";
 
+for (const width of [1380, 390]) {
+  test(`entry drops the visible card after loading at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 800 });
+    await page.goto(`${baseURL}/#about`, { waitUntil: "domcontentloaded" });
+    const stage = page.locator(".lanyard-stage");
+    await stage.scrollIntoViewIfNeeded();
+    await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true", { timeout: 25_000 });
+    const portrait = async path => {
+      const { data, info } = await sharp(await stage.screenshot({ path })).raw().toBuffer({ resolveWithObject: true });
+      let count = 0, sumY = 0;
+      for (let y = 0; y < info.height; y++) {
+        for (let x = 0; x < info.width; x++) {
+          const i = (y * info.width + x) * info.channels;
+          const channels = [data[i], data[i + 1], data[i + 2]];
+          if (Math.max(...channels) - Math.min(...channels) > 25 && Math.max(...channels) > 70) {
+            count++;
+            sumY += y;
+          }
+        }
+      }
+      expect(count, "The portrait remains visible during entry").toBeGreaterThan(500);
+      return sumY / count;
+    };
+    const entryY = await portrait(testInfo.outputPath("lanyard-entry.png"));
+    await page.waitForTimeout(1_000);
+    const hangingY = await portrait(testInfo.outputPath("lanyard-hanging.png"));
+    expect(hangingY - entryY, "The card falls before settling into its hanging position").toBeGreaterThan(20);
+  });
+}
+
 test("card artwork is available before JavaScript or the 3D bundle", async ({ browser }) => {
   const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width: 1380, height: 800 } });
   try {

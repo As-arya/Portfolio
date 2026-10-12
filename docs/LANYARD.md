@@ -13,7 +13,7 @@
 
 Gambar kartu tampil sejak HTML awal tersedia, kemudian digantikan kartu 3D pada posisi tergantung setelah tekstur dan shader siap. Pengunjung dapat menarik, meregangkan, melepaskan, atau mengeklik kartu untuk membaliknya. Tidak ada panel kontrol di bawah kartu. Fokuskan area kartu dengan Tab, lalu tekan Enter atau Space untuk membaliknya; outline fokus hanya muncul saat memakai keyboard. Simulasi serta render berhenti ketika canvas di luar viewport atau tab tersembunyi. Geometri, material, tekstur, environment, observer, dan listener dibersihkan ketika komponen dilepas.
 
-Default situs memakai `intro={false}` agar pergantian dari gambar ke 3D tidak membuat kartu menghilang ke luar frame; prop intro tetap tersedia. Kembali ke About mempertahankan canvas dan sisi kartu, sehingga tidak ada reset mendadak. `.lanyard-scene` menyediakan `data-ready` untuk pemeriksaan browser. Reduced motion, kegagalan WebGL, atau kegagalan tekstur memakai kartu statis dengan tepi hitam yang bisa dibalik lewat klik atau keyboard.
+Default situs memakai `intro={true}`. Kartu mulai sedikit lebih tinggi dengan tali kendur, lalu jatuh dan menetap di posisi menggantung; posisi awal tetap di dalam frame. Animasi dimulai setelah tekstur/shader siap dan frame pertama berisi foto ditampilkan. Kembali ke About mempertahankan canvas dan sisi kartu, sehingga intro tidak diulang. `.lanyard-scene` menyediakan `data-ready` untuk pemeriksaan browser. Reduced motion, kegagalan WebGL, atau kegagalan tekstur memakai kartu statis dengan tepi hitam yang bisa dibalik lewat klik atau keyboard.
 
 ## Loading (13 Oktober 2026)
 
@@ -26,7 +26,7 @@ Default situs memakai `intro={false}` agar pergantian dari gambar ke 3D tidak me
 ## Pemeriksaan
 
 - `npx playwright test tests/lanyard-drag.spec.mjs --workers=1`: drag melewati frame, kembali setelah dilepas, flip, reduced motion, dan mobile.
-- `npx playwright test tests/lanyard-loading.spec.mjs --workers=1`: gambar sebelum JavaScript, tekstur lambat, isi kartu pada frame 3D pertama, dan tekstur gagal.
+- `npx playwright test tests/lanyard-loading.spec.mjs --workers=1`: gambar sebelum JavaScript, tekstur lambat, isi kartu pada frame 3D pertama, tekstur gagal, serta gerakan jatuh dengan foto tetap terlihat pada desktop/mobile.
 - Tes browser memakai server pada `http://127.0.0.1:3000` secara default; `PORTFOLIO_TEST_URL` dapat diarahkan ke port preview lain.
 
 Periksa juga logo BINUS, tepi kartu, kedua sisi gambar, serta scroll sentuh di luar kartu saat mengubah prop ukuran atau panjang tali.
