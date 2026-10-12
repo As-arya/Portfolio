@@ -25,12 +25,7 @@ import { useCopy } from "./preferences";
 import { profile } from "./data";
 import { activeSection } from "./navigation";
 import ScrollReveal from "./scroll-reveal";
-const Lanyard = dynamic(() => import("./lanyard"), {
-  ssr: false,
-  loading: () => (
-    <div className="lanyard-loading" aria-label="Loading lanyard" />
-  ),
-});
+import Lanyard from "./lanyard";
 const PixelBlast = dynamic(() => import("./pixel-blast"), { ssr: false });
 
 type Turnstile = {
@@ -363,10 +358,10 @@ export function About({ availability }: { availability: "open_to_work" | "hired"
       </div>
       <div className="lanyard-area">
         <Lanyard
-          frontImage="/lanyard/front.png"
-          backImage="/lanyard/back.png"
+          frontImage="/lanyard/front.webp"
+          backImage="/lanyard/back.webp"
           imageFit="cover"
-          strapImage="/lanyard/strap.png"
+          strapImage="/lanyard/strap.webp"
         />
       </div>
     </section>

@@ -211,13 +211,14 @@
 .lanyard-stage canvas {
   touch-action: pan-y;
 }
+.lanyard-scene[data-ready="false"] .lanyard { visibility: hidden; }
 .lanyard-stage:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 .lanyard-loading {
   height: 690px;
 }
 .scene-loading {
   position: absolute;
-  top: 48%;
+  bottom: 24px;
   left: 0;
   right: 0;
   text-align: center;
@@ -226,6 +227,9 @@
   pointer-events: none;
 }
 .lanyard-static {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   height: 100%;
   display: flex;
   align-items: center;

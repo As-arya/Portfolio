@@ -91,12 +91,12 @@ test("reduced motion uses a static card that can still flip", async ({ page }) =
   const stage = page.locator(".lanyard-stage");
   await stage.scrollIntoViewIfNeeded();
   await expect(stage.locator("canvas")).toHaveCount(0);
-  await expect(stage.locator("img")).toHaveAttribute("src", /front\.png/);
+  await expect(stage.locator("img")).toHaveAttribute("src", /front\.webp/);
   await expect(page.locator(".lanyard-controls")).toHaveCount(0);
   await stage.click();
-  await expect(stage.locator("img")).toHaveAttribute("src", /back\.png/);
+  await expect(stage.locator("img")).toHaveAttribute("src", /back\.webp/);
   await stage.press("Space");
-  await expect(stage.locator("img")).toHaveAttribute("src", /front\.png/);
+  await expect(stage.locator("img")).toHaveAttribute("src", /front\.webp/);
 });
 
 test("mobile layout fits and returning to About preserves the card", async ({ page }) => {

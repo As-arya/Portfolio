@@ -2,8 +2,11 @@
 
 import { Component, useEffect, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
-import LanyardCard, { type LanyardProps } from "./lanyard-card";
+import dynamic from "next/dynamic";
+import type { LanyardProps } from "./lanyard-card";
 import { useCopy } from "./preferences";
+
+const LanyardCard = dynamic(() => import("./lanyard-card"), { ssr: false });
 
 class SceneBoundary extends Component<
   { children: ReactNode; fallback: ReactNode; onFailure: () => void },
@@ -16,8 +19,8 @@ class SceneBoundary extends Component<
 }
 
 export default function Lanyard({
-  frontImage = "/lanyard/front.png", backImage = "/lanyard/back.png",
-  strapImage = "/lanyard/strap.png", ...props
+  frontImage = "/lanyard/front.webp", backImage = "/lanyard/back.webp",
+  strapImage = "/lanyard/strap.webp", ...props
 }: LanyardProps) {
   const { t } = useCopy();
   const host = useRef<HTMLDivElement>(null);
@@ -39,7 +42,7 @@ export default function Lanyard({
     return () => { observer.disconnect(); query.removeEventListener("change", change); };
   }, []);
 
-  const fallback = <div className="lanyard-static"><div className="static-strap" /><Image src={flipped ? backImage : frontImage} width={256} height={384} alt={flipped ? t("Stiker teknologi", "Technology stickers") : "Asarya Jachred Alotia"} /></div>;
+  const fallback = <div className="lanyard-static"><div className="static-strap" /><Image src={flipped ? backImage : frontImage} width={256} height={384} unoptimized preload={!flipped} alt={flipped ? t("Stiker teknologi", "Technology stickers") : "Asarya Jachred Alotia"} /></div>;
 
   return <div className="lanyard-scene" ref={host} data-ready={ready}>
     <div className="lanyard-stage" role="button" tabIndex={0} aria-pressed={flipped}
@@ -48,9 +51,10 @@ export default function Lanyard({
         if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setFlipped(value => !value); }
       }}
       onClick={() => { if (reduced || failed) setFlipped(value => !value); }}>
-      {reduced || failed || !loaded ? fallback : <SceneBoundary fallback={fallback} onFailure={() => setFailed(true)}>
+      {(!ready || reduced || failed || !loaded) && fallback}
+      {!reduced && !failed && loaded && <SceneBoundary fallback={null} onFailure={() => setFailed(true)}>
         <LanyardCard frontImage={frontImage} backImage={backImage} strapImage={strapImage}
-          size={0.52} strapLength={0.32} strapWidth={0.65} strapColor="#171c22" damping={0.7} breeze={0.16} finish="matte" cardColor="#111111"
+          size={0.52} strapLength={0.32} strapWidth={0.65} strapColor="#171c22" damping={0.7} breeze={0.16} finish="matte" cardColor="#111111" intro={false}
           {...props} flipped={flipped} onFlip={setFlipped} onReady={() => setReady(true)} onFailure={() => setFailed(true)} />
       </SceneBoundary>}
       {!ready && !failed && !reduced && loaded && <span className="scene-loading" role="status">{t("Memuat lanyard...", "Loading lanyard...")}</span>}

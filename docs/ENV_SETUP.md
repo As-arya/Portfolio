@@ -41,6 +41,8 @@ Vercel menonaktifkan `require()` untuk ES Module secara default. Firebase Admin 
 
 Jangan memakai URL dashboard `vercel.com`, menambahkan `/admin`, atau mengubah nama menjadi `NEXT_PUBLIC_APP_ORIGIN`. Nilai hanya berlaku untuk satu origin; akses dari domain lain akan ditolak. Gunakan domain produksi yang stabil dan arahkan alias domain ke domain tersebut.
 
+Untuk memeriksa perubahan konten dan kode terbaru, gunakan **Production Domain** dari **Project > Settings > Domains**. URL berbentuk `nama-project-hash-team.vercel.app` menunjuk ke satu deployment tertentu dan tetap memakai kode versi itu, meskipun database kontennya sudah diperbarui. Setelah menyimpan pendidikan, buka ulang domain produksi dan reload halaman utama. [Jenis URL deployment Vercel](https://vercel.com/docs/deployments/generated-urls)
+
 ## 2. Firebase Web, Admin, dan database
 
 Di [Firebase Console](https://console.firebase.google.com/), pilih atau buat project, lalu:

@@ -372,10 +372,12 @@ const loadImage = (
   if (cached) return cached;
   const promise = new Promise<HTMLImageElement | null>(resolve => {
     const image = new Image();
+    const finish = (value: HTMLImageElement | null) => { clearTimeout(timeout); resolve(value); };
+    const timeout = window.setTimeout(() => finish(null), 15_000);
     image.crossOrigin = 'anonymous';
     image.decoding = 'async';
-    image.onload = () => resolve(image);
-    image.onerror = () => resolve(null);
+    image.onload = () => finish(image);
+    image.onerror = () => finish(null);
     image.src = url;
   });
   cache.set(url, promise);
@@ -1067,6 +1069,7 @@ const Lanyard = ({
     let hovering = false;
     let press: Press | null = null;
     let imageToken = 0;
+    let texturesReady = false;
     const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
     const paintFaces = () => {
@@ -1155,18 +1158,32 @@ const Lanyard = ({
       const imageKey = `${s.frontImage}|${s.backImage}|${s.strapImage}`;
       if (imageKey !== applied.imageKey) {
         const token = ++imageToken;
+        texturesReady = false;
         Promise.all([
           loadImage(imageCache, s.frontImage),
           loadImage(imageCache, s.backImage),
           loadImage(imageCache, s.strapImage)
-        ]).then(([front, back, strap]) => {
+        ]).then(async ([front, back, strap]) => {
           if (!alive || token !== imageToken) return;
+          if ((s.frontImage && !front) || (s.backImage && !back) || (s.strapImage && !strap)) {
+            callbacksRef.current.onFailure?.();
+            return;
+          }
           images.front = front;
           images.back = back;
           images.strap = strap;
           paintFaces();
           repaintStrap();
-          callbacksRef.current.onReady?.();
+          await renderer.compileAsync(scene, camera);
+          if (!alive || token !== imageToken) return;
+          texturesReady = true;
+          render();
+          start();
+          requestAnimationFrame(() => {
+            if (alive && token === imageToken) callbacksRef.current.onReady?.();
+          });
+        }).catch(() => {
+          if (alive && token === imageToken) callbacksRef.current.onFailure?.();
         });
       }
       const faceKey = `${layoutKey}|${s.cardColor}|${s.imageFit}`;
@@ -1284,6 +1301,7 @@ const Lanyard = ({
     };
 
     const render = () => {
+      if (!texturesReady) return;
       cardGroup.position.copy(sim.body.position);
       cardGroup.quaternion.copy(sim.body.quaternion);
       updateBand();
@@ -1336,7 +1354,7 @@ const Lanyard = ({
     };
 
     const start = () => {
-      if (raf || !visible || document.hidden || !alive) return;
+      if (raf || !visible || document.hidden || !alive || !texturesReady) return;
       sim.calm = 0;
       last = performance.now();
       raf = requestAnimationFrame(tick);
