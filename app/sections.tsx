@@ -11,7 +11,6 @@ import {
 import GlassSurface from "./glass-surface";
 import {
   IconArrowUpRight,
-  IconArrowUp,
   IconBrandGithub,
   IconBrandInstagram,
   IconBrandLinkedin,
@@ -329,7 +328,7 @@ export function About({ availability }: { availability: "open_to_work" | "hired"
   return (
     <section id="about" className="about section container" aria-labelledby="about-title">
       <div className="about-copy">
-        <div className="about-topline"><span className="eyebrow">ABOUT ME</span><span className="availability"><i />{availability === "hired" ? t("Sudah bekerja", "Hired") : "Open to work"}</span></div>
+        <div className="about-topline"><span className="availability"><i />{availability === "hired" ? t("Sudah bekerja", "Hired") : "Open to work"}</span></div>
         <h1 id="about-title" ref={nameRef} className="typing-name" aria-label={`${profile.name}.`}>
           <span aria-hidden="true" className="typing-name-text">{typedName}</span>
           {typedName === name && <span aria-hidden="true" className="accent-period">.</span>}
@@ -505,20 +504,5 @@ export function Contact({ nonce }: { nonce?: string }) {
         </p>
       </form>
     </section>
-  );
-}
-export function Footer({ homeLinks = false }: { homeLinks?: boolean }) {
-  const { t } = useCopy();
-  return (
-    <footer className="footer container">
-      <a className="wordmark" href={homeLinks ? "/#about" : "#about"}>
-        Asarya
-      </a>
-      <p>© {new Date().getFullYear()} Asarya Jachred Alotia</p>
-      <a href={homeLinks ? "#project-content" : "#about"} className="text-link">
-        {t("Kembali ke atas", "Back to top")}
-        <IconArrowUp size={17} />
-      </a>
-    </footer>
   );
 }

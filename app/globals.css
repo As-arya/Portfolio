@@ -432,7 +432,6 @@ h3 {
   padding-top: 160px;
 }
 .about-topline { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 26px; }
-.about .about-topline .eyebrow { margin-bottom: 0; }
 .about h1 {
   font-size: clamp(44px, 4.8vw, 68px);
   margin-bottom: 28px;
@@ -951,23 +950,6 @@ h3 {
   line-height: 1.7;
   min-height: 20px;
 }
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  padding-block: 35px;
-}
-.footer > p {
-  font-size: 10px;
-  color: var(--muted);
-}
-.footer .wordmark {
-  font-size: 22px;
-}
-.footer .text-link {
-  font-size: 11px;
-}
 @media (min-width: 1600px) {
   .hero-portrait {
     height: 83%;
@@ -1218,9 +1200,6 @@ h3 {
   .about-facts p {
     font-size: 11px;
   }
-  .about .eyebrow {
-    margin-bottom: 20px;
-  }
   .lanyard-scene {
     height: 580px;
     max-width: 420px;
@@ -1281,15 +1260,6 @@ h3 {
   }
   .contact-copy .body-copy {
     margin-bottom: 25px;
-  }
-  .footer {
-    flex-wrap: wrap;
-    gap: 25px;
-  }
-  .footer > p {
-    order: 3;
-    width: 100%;
-    font-size: 9px;
   }
   .project-dialog {
     width: calc(100% - 18px);

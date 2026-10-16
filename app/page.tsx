@@ -1,4 +1,4 @@
-import { Header, About, Contact, Footer } from "./sections";
+import { Header, About, Contact } from "./sections";
 import { Projects } from "./work";
 import Technology from "./technology";
 import Education from "./education";
@@ -27,7 +27,6 @@ export default async function Page() {
         <Certificates entries={certificates} />
         <Contact nonce={nonce} />
       </main>
-      <Footer />
     </div>
   );
 }

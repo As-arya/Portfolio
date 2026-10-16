@@ -96,10 +96,7 @@ function GitHubActivity() {
     >
       <div className="github-activity">
         <div className="github-activity-heading">
-          <div>
-            <span className="eyebrow">{t("AKTIVITAS KODE", "CODING ACTIVITY")}</span>
-            <h3>GitHub Activity<span className="accent-period">.</span></h3>
-          </div>
+          <h3>GitHub Activity<span className="accent-period">.</span></h3>
           <p>{t("Grafik kontribusi langsung dari GitHub.", "Contribution graph directly from GitHub.")}</p>
         </div>
         {activity ? (

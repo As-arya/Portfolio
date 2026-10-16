@@ -178,9 +178,6 @@
   padding-bottom: 30px;
   border-bottom: 1px solid var(--line);
 }
-.github-activity-heading .eyebrow {
-  margin-bottom: 10px;
-}
 .github-activity-heading h3 {
   font-size: clamp(30px, 3vw, 42px);
   line-height: 1.04;

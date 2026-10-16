@@ -4,7 +4,7 @@ import { useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { IconArrowLeft, IconArrowRight, IconArrowUpRight, IconBrandGithub, IconBrandGooglePlay, IconPhoto, IconPlayerPlay } from "@tabler/icons-react";
 import { useCopy } from "../../preferences";
-import { Footer, Header } from "../../sections";
+import { Header } from "../../sections";
 import type { Media, ProjectRecord } from "../../../lib/models";
 import StackTags from "../../project-stack";
 
@@ -105,7 +105,6 @@ export function ProjectDetail({ project }: { project: ProjectRecord }) {
         <ProjectStack project={project} />
         <ProjectActions project={project} />
       </main>
-      <Footer homeLinks />
     </>
   );
 }

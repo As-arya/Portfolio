@@ -10,7 +10,7 @@ export default function Education({ entries }: { entries: EducationRecord[] }) {
   const { lang, t } = useCopy();
   return <section id="education" className="education section container" aria-labelledby="education-title">
     <Reveal className="education-heading">
-      <div><span className="eyebrow">{t("PERJALANAN BELAJAR", "LEARNING JOURNEY")}</span><h2 id="education-title">Education<span className="accent-period">.</span></h2></div>
+      <div><h2 id="education-title">Education<span className="accent-period">.</span></h2></div>
     </Reveal>
     {entries.length ? <div className="education-list">{entries.map(entry => {
       const content = entry.translations[lang];
