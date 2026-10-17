@@ -87,7 +87,7 @@
   color: var(--text);
   font-size: 17px;
   font-weight: 550;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.015em;
   white-space: nowrap;
 }
 .technology-logo-icon,
@@ -182,14 +182,6 @@
   font-size: clamp(30px, 3vw, 42px);
   line-height: 1.04;
 }
-.github-activity-heading > p {
-  max-width: 250px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.55;
-  text-align: right;
-}
 .activity-dashboard {
   display: grid;
   grid-template-columns: minmax(248px, 0.8fr) minmax(0, 1.8fr);
@@ -218,7 +210,7 @@
   font-size: 31px;
   font-weight: 550;
   line-height: 1;
-  letter-spacing: -0.065em;
+  letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
 }
 .activity-metric-main strong {
@@ -263,7 +255,7 @@
   height: 24px;
   margin-left: 31px;
   color: var(--muted);
-  font: 10px var(--font-mono), monospace;
+  font: 10px var(--font-sans), sans-serif;
   white-space: nowrap;
 }
 .activity-calendar-body {
@@ -278,7 +270,7 @@
   grid-template-rows: repeat(7, var(--activity-day-size));
   row-gap: 3px;
   color: var(--muted);
-  font: 9px var(--font-mono), monospace;
+  font: 9px var(--font-sans), sans-serif;
 }
 .activity-weekdays span:nth-child(1) { grid-row: 2; }
 .activity-weekdays span:nth-child(2) { grid-row: 4; }
@@ -309,14 +301,10 @@
 .activity-calendar-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   margin-top: auto;
   padding-top: 26px;
-}
-.activity-handle {
-  color: var(--muted);
-  font: 10px var(--font-mono), monospace;
 }
 .github-activity-legend {
   display: flex;
@@ -356,7 +344,6 @@
   .github-activity { padding: 22px 17px; }
   .github-activity-heading { display: block; margin-bottom: 22px; padding-bottom: 22px; }
   .github-activity-heading h3 { font-size: 31px; }
-  .github-activity-heading > p { text-align: left; margin-top: 15px; }
   .activity-metrics { display: grid; grid-template-columns: 1fr; }
   .activity-calendar-panel { padding: 20px 13px 15px; }
   .activity-calendar-footer { flex-wrap: wrap; padding-top: 18px; }

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import CountUp from "./count-up";
 import DecryptedText from "./decrypted-text";
-import { skills, profile } from "./data";
+import { skills } from "./data";
 import GlassSurface from "./glass-surface";
 import LogoLoop from "./logo-loop";
 import type { Contribution } from "./github-contributions";
@@ -28,7 +28,6 @@ type Activity = { days: Contribution[]; total: number; activeDays: number; longe
 
 function GitHubActivity() {
   const { t } = useCopy();
-  const username = new URL(profile.github).pathname.slice(1);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [failed, setFailed] = useState(false);
   const drag = useRef<{ x: number; scrollLeft: number } | null>(null);
@@ -97,7 +96,6 @@ function GitHubActivity() {
       <div className="github-activity">
         <div className="github-activity-heading">
           <h3>GitHub Activity<span className="accent-period">.</span></h3>
-          <p>{t("Grafik kontribusi langsung dari GitHub.", "Contribution graph directly from GitHub.")}</p>
         </div>
         {activity ? (
           <div className="activity-dashboard">
@@ -159,7 +157,6 @@ function GitHubActivity() {
                 </div>
               </div>
               <div className="activity-calendar-footer">
-                <span className="activity-handle">@{username} · {t("tarik ke kanan untuk bulan sebelumnya", "drag right for earlier months")}</span>
                 <div className="github-activity-legend" aria-hidden="true">
                   <span>{t("Sedikit", "Less")}</span>
                   {[0, 1, 2, 3, 4].map((level) => <i key={level} className={`activity-level-${level}`} />)}

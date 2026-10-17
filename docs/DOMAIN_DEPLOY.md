@@ -13,7 +13,7 @@ Status diperiksa **13 Oktober 2026**. Project Vercel: `AS-Arya's projects / port
 | DNS dan HTTPS domain sendiri | Kedua domain di Vercel masih Invalid Configuration karena DNS belum dipasang. | not done — menunggu domain aktif |
 | Origin dan layanan pada domain sendiri | APP_ORIGIN, Authorized domains Firebase, dan hostname Turnstile perlu disesuaikan setelah domain aktif. Pengujian login/Contact pada domain baru belum dilakukan. | not done |
 
-Domain publik sementara: [portfolio-gilt-ten-35.vercel.app](https://portfolio-gilt-ten-35.vercel.app/). URL per-deployment yang memakai hash dapat meminta login Vercel dan menunjuk ke versi tertentu.
+Domain publik sementara: [asaryajachredalotia.vercel.app](https://asaryajachredalotia.vercel.app/) (sebelumnya `portfolio-gilt-ten-35.vercel.app`). Setelah pergantian ini, `APP_ORIGIN` pada ENV Production harus diubah ke `https://asaryajachredalotia.vercel.app` lalu Redeploy; jika tidak, login admin menampilkan **Permintaan lintas situs ditolak.** URL per-deployment yang memakai hash dapat meminta login Vercel dan menunjuk ke versi tertentu.
 
 ## Setelah pembelian selesai
 

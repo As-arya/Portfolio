@@ -12,6 +12,7 @@ test("responsive navigation, activity, and project reveal stay usable", async ({
   await page.route("**/api/github-contributions", (route) =>
     route.fulfill({ json: { days } }),
   );
+  await page.addInitScript(() => { if (!localStorage.getItem("portfolio-language")) localStorage.setItem("portfolio-language", "id"); });
   await page.goto("http://127.0.0.1:3000");
   await page.addStyleTag({ content: "html { scroll-behavior: auto !important; }" });
 

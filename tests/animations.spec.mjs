@@ -13,7 +13,7 @@ test("intro stays readable on return and project effects remain interactive", as
   await expect(name).toHaveText("Asarya\nJachred Alotia");
   const about = page.locator("#about");
   await expect.poll(() => page.locator(".scroll-reveal-word").last().evaluate((word) => getComputedStyle(word).opacity)).toBe("1");
-  expect(await page.locator(".scroll-reveal").evaluate((paragraph) => getComputedStyle(paragraph).fontWeight)).toBe("650");
+  expect(await page.locator(".scroll-reveal").evaluate((paragraph) => getComputedStyle(paragraph).fontWeight)).toBe("500");
   await expect(page.locator(".social-links")).toBeVisible();
   await expect(page.locator(".about-facts")).toBeVisible();
   expect(await page.locator(".scroll-reveal-word").first().evaluate((word) => getComputedStyle(word).filter)).toBe("none");

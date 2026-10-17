@@ -2,14 +2,14 @@
 import { createContext, useContext, useEffect, useState } from "react";
 type Language = "id" | "en";
 const Context = createContext({
-  lang: "id" as Language,
+  lang: "en" as Language,
   setLang: (_: Language) => {},
 });
 export function Preferences({ children }: { children: React.ReactNode }) {
-  const [lang, setLang] = useState<Language>("id");
+  const [lang, setLang] = useState<Language>("en");
   useEffect(() => {
     try {
-      if (localStorage.getItem("portfolio-language") === "en") setLang("en");
+      if (localStorage.getItem("portfolio-language") === "id") setLang("id");
     } catch {}
   }, []);
   function changeLang(value: Language) {

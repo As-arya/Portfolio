@@ -3,7 +3,10 @@ import { test, expect } from "@playwright/test";
 test.use({ channel: "msedge", viewport: { width: 1280, height: 800 } });
 
 test("theme expands from its button and respects reduced motion", async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem("portfolio-theme", "light"));
+  await page.addInitScript(() => {
+    localStorage.setItem("portfolio-theme", "light");
+    localStorage.setItem("portfolio-language", "id");
+  });
   await page.goto("http://127.0.0.1:3000");
   const button = page.getByRole("button", { name: "Ganti tema" });
   const bounds = await button.boundingBox();

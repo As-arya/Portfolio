@@ -21,6 +21,7 @@ test("project window follows the language toggle and Contact posts verified data
     return route.fulfill({ status: 201, json: { saved: true } });
   });
 
+  await page.addInitScript(() => { if (!localStorage.getItem("portfolio-language")) localStorage.setItem("portfolio-language", "id"); });
   await page.goto(`${baseURL}/`);
   const opener = page.locator(".project-row .project-image-button").first();
   const titleId = await page.locator(".project-row h3").first().textContent();
@@ -63,4 +64,17 @@ test("project window follows the language toggle and Contact posts verified data
     message: "Hello from the portfolio form.",
     turnstileToken: "test-token",
   });
+});
+
+test("first visit defaults to English and a saved Indonesian choice is kept", async ({ page }) => {
+  await page.goto(`${baseURL}/`);
+  await expect(page).toHaveTitle("Asarya Alotia Portfolio");
+  await expect(page.locator("html")).toHaveAttribute("lang", "en");
+  const toggle = page.locator(".language-control");
+  await expect(toggle).toHaveAttribute("aria-label", "Ubah bahasa ke Indonesia");
+  await toggle.click();
+  await expect(page.locator("html")).toHaveAttribute("lang", "id");
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("lang", "id");
+  await expect(toggle).toHaveAttribute("aria-label", "Change language to English");
 });

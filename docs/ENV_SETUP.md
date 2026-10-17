@@ -165,6 +165,7 @@ Untuk port lain, atur `$env:PORTFOLIO_TEST_URL='http://127.0.0.1:3001'` sebelum 
 | --- | --- |
 | Build berhasil, halaman 500 dengan `ERR_REQUIRE_ESM` dari `jwks-rsa`/`jose` | Gunakan Node 24.x, tambahkan `NODE_OPTIONS=--experimental-require-module` pada ENV Vercel untuk environment deployment, lalu Redeploy |
 | Login menampilkan **Origin aplikasi belum dikonfigurasi.** | Isi `APP_ORIGIN` pada ENV Production sesuai origin domain yang diakses, Save, lalu Redeploy; lihat bagian Origin aplikasi untuk login dan Contact |
+| Login menampilkan **Permintaan lintas situs ditolak.** | `APP_ORIGIN` tidak sama persis dengan alamat di browser, biasanya setelah domain Vercel diganti. Ubah `APP_ORIGIN` menjadi origin baru (contoh `https://asaryajachredalotia.vercel.app`, tanpa `/` di akhir), Save, Redeploy, lalu buka admin dari domain yang sama. Tambahkan juga domain baru pada Firebase Authorized domains dan hostname Turnstile |
 | Firebase belum dikonfigurasi | Nilai Web Firebase, lokasi `.env.local`, dan restart server |
 | Private key / PEM tidak valid | Kunci lengkap, tanda kutip ganda, dan `\n` dari JSON |
 | Akun ini tidak memiliki akses | UID, email, dan cara login sesuai peran utama/cadangan |

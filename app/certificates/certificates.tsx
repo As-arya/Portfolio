@@ -33,7 +33,7 @@ export default function Certificates({ entries }: { entries: CertificateRecord[]
           <img src={entry.image.url} alt={alt(entry)} loading="lazy" />
           <span className="certificate-view">{t("Perbesar", "Enlarge")}<IconArrowUpRight size={17} /></span>
         </button>
-        <div className="certificate-copy"><span className="eyebrow">{entry.image.publicId.startsWith("sample/") ? t("DATA CONTOH", "SAMPLE CONTENT") : t("SERTIFIKAT", "CERTIFICATE")}</span><h2>{entry.translations[lang].title}</h2><p>{entry.translations[lang].description}</p></div>
+        <div className="certificate-copy">{entry.image.publicId.startsWith("sample/") && <span className="eyebrow">{t("DATA CONTOH", "SAMPLE CONTENT")}</span>}<h2>{entry.translations[lang].title}</h2><p>{entry.translations[lang].description}</p></div>
       </article></Reveal>)}</div>
       {!entries.length && <p className="certificates-empty">{t("Sertifikat akan ditambahkan.", "Certificates will be added soon.")}</p>}
     <dialog ref={dialog} className="certificate-dialog" aria-labelledby="certificate-dialog-title" onCancel={event => { event.preventDefault(); setSelected(null); }} onClick={event => { if (event.target === event.currentTarget) setSelected(null); }}>

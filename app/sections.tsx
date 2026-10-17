@@ -484,18 +484,17 @@ export function Contact({ nonce }: { nonce?: string }) {
             rows={4}
           />
         </label>
-        {turnstileSiteKey ? (
+        {turnstileSiteKey && (
           <>
             <div ref={widgetContainer} className="turnstile-widget" aria-label={t("Verifikasi keamanan", "Security verification")} />
             <Script nonce={nonce} src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" onReady={renderChallenge} onError={() => setNotice("challenge")} />
           </>
-        ) : <p className="form-status">{t("Formulir belum dikonfigurasi. Hubungi pemilik situs.", "The form is not configured. Please contact the site owner.")}</p>}
+        )}
         <div className="form-bottom">
           <button type="submit" className="pill primary" disabled={pending || !turnstileSiteKey}>
             {pending ? t("Mengirim...", "Sending...") : t("Kirim pesan", "Send message")}
             <IconMail size={18} />
           </button>
-          <span>{t("Dilindungi verifikasi keamanan", "Protected by security verification")}</span>
         </div>
         <p role={notice === "error" || notice === "challenge" ? "alert" : "status"} className="form-status">
           {notice === "challenge" ? t("Selesaikan verifikasi keamanan terlebih dahulu.", "Complete the security check first.") :

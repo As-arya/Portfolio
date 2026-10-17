@@ -1,25 +1,20 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Poppins } from "next/font/google";
 import { headers } from "next/headers";
 import "./globals.css";
 import "./refinements.css";
 import { Preferences } from "./preferences";
 
-const sans = localFont({
-  src: "./fonts/Manrope.ttf",
+const sans = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-sans",
   display: "swap",
 });
-const mono = localFont({
-  src: "./fonts/IBMPlexMono-Regular.ttf",
-  variable: "--font-mono",
-  display: "swap",
-  weight: "400",
-});
 export const metadata: Metadata = {
-  title: "Asarya Jachred Alotia | Software Engineering Portfolio",
+  title: "Asarya Alotia Portfolio",
   description:
-    "Portofolio Asarya Jachred Alotia, mahasiswa Computer Science BINUS University dengan peminatan Software Engineering.",
+    "Portfolio of Asarya Jachred Alotia, a Computer Science student at BINUS University specializing in Software Engineering.",
 };
 export default async function RootLayout({
   children,
@@ -28,8 +23,8 @@ export default async function RootLayout({
 }) {
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   return (
-    <html lang="id" suppressHydrationWarning>
-      <body className={`${sans.variable} ${mono.variable}`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={sans.variable}>
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{

@@ -6,6 +6,7 @@ const baseURL = process.env.PORTFOLIO_TEST_URL || "http://127.0.0.1:3000";
 async function trackWaves(page) {
   await page.addInitScript(() => {
     localStorage.setItem("portfolio-theme", "light");
+    localStorage.setItem("portfolio-language", "id");
     const draw = WebGL2RenderingContext.prototype.drawArrays;
     WebGL2RenderingContext.prototype.drawArrays = function (...args) {
       const result = draw.apply(this, args);

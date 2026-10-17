@@ -9,8 +9,9 @@ test("certificate samples render, enlarge, follow language and fit mobile", asyn
   page.on("console", message => {
     if (message.type() === "error" && !message.location().url.endsWith("/favicon.ico")) errors.push(message.text());
   });
+  await page.addInitScript(() => { if (!localStorage.getItem("portfolio-language")) localStorage.setItem("portfolio-language", "id"); });
   await page.goto(`${baseURL}/#certificates`);
-  await expect(page.locator(".projects-heading .eyebrow, .projects-heading > p, .certificates-intro .eyebrow, .certificates-intro > p, .contact-copy > .eyebrow, .education-heading > p, .about-topline .eyebrow, .education-heading .eyebrow, .github-activity-heading .eyebrow, footer")).toHaveCount(0);
+  await expect(page.locator(".projects-heading .eyebrow, .projects-heading > p, .certificates-intro .eyebrow, .certificates-intro > p, .contact-copy > .eyebrow, .education-heading > p, .about-topline .eyebrow, .education-heading .eyebrow, .github-activity-heading .eyebrow, .github-activity-heading > p, .activity-handle, .form-bottom > span, footer")).toHaveCount(0);
   await expect(page.locator('a[href="#certificates"][aria-current="location"]')).toHaveCount(1);
   await expect(page.locator(".certificate-card")).toHaveCount(2);
   await expect(page.locator(".certificate-card").first()).toHaveCSS("opacity", "1");
