@@ -339,7 +339,7 @@ export function About({ availability }: { availability: "open_to_work" | "hired"
         </p>
         <ScrollReveal
           text={t(
-            "Mahasiswa S1 Computer Science BINUS University dengan peminatan Software Engineering. Saya berfokus pada pengembangan aplikasi mobile dan fullstack dengan Flutter, React, dan Next.js, mulai dari antarmuka hingga backend dan database. Proyek-proyek saya bisa dilihat di portfolio ini.",
+            "Undergraduate Computer Science BINUS University dengan peminatan Software Engineering. Saya berfokus pada pengembangan aplikasi mobile dan fullstack dengan Flutter, React, dan Next.js, mulai dari antarmuka hingga backend dan database. Projects saya bisa dilihat di portfolio ini.",
             "Undergraduate Computer Science student at BINUS University, specializing in Software Engineering. I focus on mobile and fullstack development with Flutter, React, and Next.js, building everything from the interface to the backend and database. My projects are showcased throughout this portfolio.",
           )}
         />

@@ -112,6 +112,9 @@
 :root[data-theme="dark"] .technology-logo-icon img[src$="/icons/express.svg"] {
   filter: invert(1);
 }
+:root[data-theme="dark"] .technology-logo-icon :is(img[src$="/icons/prisma.svg"], img[src$="/icons/jwt.svg"], img[src$="/icons/vercel.svg"]) {
+  filter: brightness(0) invert(1);
+}
 .technology-logo-icon b {
   display: grid;
   width: 30px;

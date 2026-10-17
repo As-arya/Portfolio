@@ -63,6 +63,15 @@ export default function PixelCard({ children }: { children: ReactNode }) {
     };
     const enter = () => animate(1);
     const leave = () => animate(0);
+    // Closing a project dialog restores focus to the clicked card. Only focus that Tab just moved here may
+    // light the card, otherwise it keeps animating while the pointer hovers another card.
+    let tabbedAt = -Infinity;
+    const trackTab = (event: KeyboardEvent) => {
+      if (event.key === "Tab") tabbedAt = event.timeStamp;
+    };
+    const focusIn = (event: FocusEvent) => {
+      if (event.timeStamp - tabbedAt < 100) enter();
+    };
     const focusOut = (event: FocusEvent) => {
       if (!host.contains(event.relatedTarget as Node)) leave();
     };
@@ -71,14 +80,16 @@ export default function PixelCard({ children }: { children: ReactNode }) {
     observer.observe(host);
     host.addEventListener("pointerenter", enter);
     host.addEventListener("pointerleave", leave);
-    host.addEventListener("focusin", enter);
+    document.addEventListener("keydown", trackTab, true);
+    host.addEventListener("focusin", focusIn);
     host.addEventListener("focusout", focusOut);
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
       host.removeEventListener("pointerenter", enter);
       host.removeEventListener("pointerleave", leave);
-      host.removeEventListener("focusin", enter);
+      document.removeEventListener("keydown", trackTab, true);
+      host.removeEventListener("focusin", focusIn);
       host.removeEventListener("focusout", focusOut);
     };
   }, []);

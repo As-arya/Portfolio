@@ -29,7 +29,10 @@ test("intro stays readable on return and project effects remain interactive", as
   await title.scrollIntoViewIfNeeded();
   await expect(title).toHaveText("Technology");
   const skillLinks = page.locator(".logo-loop-list:first-child .technology-logo");
-  await expect(skillLinks).toHaveCount(22);
+  await expect(skillLinks).toHaveCount(28);
+  for (const skill of ["Prisma", "JWT", "Firebase", "JavaScript", "React", "Vercel"]) {
+    await expect(skillLinks.filter({ hasText: skill })).toHaveCount(1);
+  }
   await expect.poll(() => skillLinks.evaluateAll((links) => links.every((link) =>
     link.href.startsWith("https://") && link.querySelector("img")?.naturalWidth > 0,
   ))).toBe(true);
@@ -39,17 +42,26 @@ test("intro stays readable on return and project effects remain interactive", as
   await expect(title).toHaveText("Technology");
 
   const card = page.locator(".pixel-card").first();
-  await card.hover();
-  await expect.poll(() => card.locator("canvas").evaluate((canvas) => {
+  const hasPixels = () => card.locator("canvas").evaluate((canvas) => {
     const data = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
     return data.some((value, index) => index % 4 === 3 && value > 0);
-  })).toBe(true);
+  });
+  await card.hover();
+  await expect.poll(hasPixels).toBe(true);
   const projectTitle = await page.locator(".project-row h3").first().textContent();
   await card.locator("button.project-image-button").click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.locator("#dialog-title")).toHaveText(projectTitle);
   await page.keyboard.press("Escape");
   await expect(dialog).not.toBeVisible();
+
+  // Closing with the mouse restores focus to the card; it must not keep animating once the pointer is gone.
+  await card.locator("button.project-image-button").click();
+  await expect(dialog.locator("#dialog-title")).toHaveText(projectTitle);
+  await dialog.getByRole("button", { name: /Close details/ }).click();
+  await expect(dialog).not.toBeVisible();
+  await page.mouse.move(0, 0);
+  await expect.poll(hasPixels).toBe(false);
 
   await page.locator("#contact").scrollIntoViewIfNeeded();
   await expect(page.locator(".contact-pixel canvas")).toHaveCount(1);

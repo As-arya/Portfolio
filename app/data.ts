@@ -91,6 +91,12 @@ export const skills = [
     url: "https://www.typescriptlang.org/",
   },
   {
+    name: "JavaScript",
+    icon: "javascript",
+    category: "Programming",
+    url: "https://developer.mozilla.org/docs/Web/JavaScript",
+  },
+  {
     name: "Python",
     icon: "python",
     category: "Programming",
@@ -139,6 +145,12 @@ export const skills = [
     url: "https://git-scm.com/",
   },
   {
+    name: "React",
+    icon: "react",
+    category: "Frontend",
+    url: "https://react.dev/",
+  },
+  {
     name: "Next.js",
     icon: "nextjs",
     category: "Frontend",
@@ -157,6 +169,18 @@ export const skills = [
     url: "https://expressjs.com/",
   },
   {
+    name: "Prisma",
+    icon: "prisma",
+    category: "Backend",
+    url: "https://www.prisma.io/",
+  },
+  {
+    name: "JWT",
+    icon: "jwt",
+    category: "Backend",
+    url: "https://jwt.io/",
+  },
+  {
     name: "C",
     icon: "c",
     category: "Programming",
@@ -172,7 +196,9 @@ export const skills = [
   { name: "MySQL", icon: "mysql", category: "Data & Deploy", url: "https://www.mysql.com/" },
   { name: "PostgreSQL", icon: "postgresql", category: "Data & Deploy", url: "https://www.postgresql.org/" },
   { name: "Supabase", icon: "supabase", category: "Data & Deploy", url: "https://supabase.com/" },
+  { name: "Firebase", icon: "firebase", category: "Data & Deploy", url: "https://firebase.google.com/" },
   { name: "Railway", icon: "railway", category: "Data & Deploy", url: "https://railway.com/" },
+  { name: "Vercel", icon: "vercel", category: "Data & Deploy", url: "https://vercel.com/" },
   { name: "Codex", icon: "codex", category: "AI Workflow", url: "https://openai.com/codex/" },
   { name: "Kiro", icon: "kiro", category: "AI Workflow", url: "https://kiro.dev/" },
   { name: "Claude Code", icon: "claude-code", category: "AI Workflow", url: "https://claude.com/product/claude-code" },

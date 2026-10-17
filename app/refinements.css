@@ -183,6 +183,7 @@
 .project-tags > span { display: inline-flex; align-items: center; gap: 8px; }
 .stack-icon { flex: none; object-fit: contain; }
 [data-theme="dark"] :is(.stack-icon-nextjs, .stack-icon-express, .stack-icon-railway, .stack-icon-codex) { filter: invert(1); }
+[data-theme="dark"] :is(.stack-icon-prisma, .stack-icon-jwt, .stack-icon-vercel) { filter: brightness(0) invert(1); }
 .project-stack { max-width: 760px; margin: 36px auto 0; padding-top: 24px; border-top: 1px solid var(--line); }
 .project-stack .eyebrow { font-size: 10px; font-weight: 500; }
 .project-stack .project-tags > span { padding: 9px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); }
