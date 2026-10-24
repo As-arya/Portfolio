@@ -32,12 +32,14 @@ test("a cold first visit shows the portrait while the front image is still downl
 test("image decoding must finish before the loading preview is removed", async ({ page }) => {
   await page.addInitScript(() => {
     const decode = HTMLImageElement.prototype.decode;
+    // Dev StrictMode runs the lanyard effect twice, so more than one decode can be held at once.
+    const held = [];
+    let released = false;
+    window.releaseDecode = () => { released = true; held.splice(0).forEach(release => release()); };
     HTMLImageElement.prototype.decode = function () {
-      if (!this.src.endsWith("/lanyard/back.webp")) return decode.call(this);
+      if (released || !this.src.endsWith("/lanyard/back.webp")) return decode.call(this);
       window.decodePending = true;
-      return new Promise((resolve, reject) => {
-        window.releaseDecode = () => decode.call(this).then(resolve, reject);
-      });
+      return new Promise((resolve, reject) => held.push(() => decode.call(this).then(resolve, reject)));
     };
   });
   await page.goto(`${baseURL}/#about`, { waitUntil: "domcontentloaded" });
@@ -46,6 +48,7 @@ test("image decoding must finish before the loading preview is removed", async (
   await expect(page.locator(".lanyard-static img")).toBeVisible();
   await page.evaluate(() => window.releaseDecode());
   await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true", { timeout: 15_000 });
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
 });
 
 test("a failed front image uses the embedded portrait instead of a black card", async ({ page }) => {
@@ -67,6 +70,7 @@ for (const width of [1380, 390]) {
     const stage = page.locator(".lanyard-stage");
     await stage.scrollIntoViewIfNeeded();
     await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true", { timeout: 25_000 });
+    await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
     const portrait = async path => {
       const { data, info } = await sharp(await stage.screenshot({ path })).raw().toBuffer({ resolveWithObject: true });
       let count = 0, sumX = 0;
@@ -138,6 +142,7 @@ test("slow textures keep the artwork visible until the renderer and full intro a
     await expect(page.locator(".lanyard")).toHaveCSS("visibility", "hidden");
     release();
     await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true", { timeout: 25_000 });
+    await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
     await expect(page.locator(".lanyard-static")).toHaveCount(0);
     await expect(page.locator(".lanyard-canvas")).toBeVisible();
     await page.waitForTimeout(1_500);

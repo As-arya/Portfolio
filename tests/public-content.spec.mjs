@@ -78,3 +78,20 @@ test("first visit defaults to English and a saved Indonesian choice is kept", as
   await expect(page.locator("html")).toHaveAttribute("lang", "id");
   await expect(toggle).toHaveAttribute("aria-label", "Change language to English");
 });
+
+test("full-screen project image closes on Escape without closing the project", async ({ page }) => {
+  await page.goto(`${baseURL}/`);
+  await page.locator(".project-row .project-image-button").first().click();
+  const project = page.locator(".project-dialog");
+  await expect(project).toHaveAttribute("open", "");
+  const zoom = project.locator(".zoom-image").first();
+  test.skip(!(await zoom.count()), "The first project has no images");
+  await zoom.click();
+  const lightbox = page.locator(".image-lightbox[open]");
+  await expect(lightbox).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(lightbox).toHaveCount(0);
+  await expect(project).toHaveAttribute("open", "");
+  await expect(zoom).toBeFocused();
+  await expect(zoom).toHaveCSS("outline-offset", "-4px");
+});

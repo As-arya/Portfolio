@@ -3,7 +3,7 @@ import { Projects } from "./work";
 import Technology from "./technology";
 import Education from "./education";
 import Certificates from "./certificates/certificates";
-import GradientWaves from "./gradient-waves";
+import Intro from "./intro";
 import { getAvailability, getCertificates, getEducation, getPublishedProjects } from "../lib/repository";
 import { headers } from "next/headers";
 
@@ -13,8 +13,7 @@ export default async function Page() {
   const nonce = (await headers()).get("x-nonce") ?? undefined;
   const [projects, availability, education, certificates] = await Promise.all([getPublishedProjects(), getAvailability(), getEducation(), getCertificates()]);
   return (
-    <div className="portfolio-home">
-      <GradientWaves />
+    <Intro>
       <a className="skip-link" href="#about">
         Skip to content
       </a>
@@ -27,6 +26,6 @@ export default async function Page() {
         <Certificates entries={certificates} />
         <Contact nonce={nonce} />
       </main>
-    </div>
+    </Intro>
   );
 }

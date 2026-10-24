@@ -12,25 +12,6 @@
   font-size: clamp(66px, 8.5vw, 124px);
   line-height: 0.94;
 }
-.decrypted-text {
-  position: relative;
-  display: inline-block;
-  white-space: nowrap;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  letter-spacing: inherit;
-  line-height: inherit;
-}
-.decrypted-text-measure {
-  visibility: hidden;
-}
-.decrypted-text-animated {
-  position: absolute;
-  inset: 0;
-}
 .technology-head > p {
   max-width: 330px;
   margin: 0 0 6px;

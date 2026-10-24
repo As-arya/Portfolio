@@ -1,7 +1,7 @@
 /* Apple-design + tasteskill review: glass belongs to the floating controls.
    This is a web approximation, not Apple's native Liquid Glass implementation. */
 :root {
-  --glass: rgba(245, 244, 241, 0.48);
+  --glass: rgba(245, 245, 245, 0.48);
   --glass-rim: rgba(255, 255, 255, 0.86);
   --glass-sheen: rgba(255, 255, 255, 0.34);
 }
@@ -234,13 +234,13 @@
   justify-content: flex-start;
 }
 .static-strap {
-  height: 160px;
+  height: 200px;
   width: 26px;
   background: #171c22;
   flex-shrink: 0;
 }
 .lanyard-static img {
-  width: 250px;
+  width: 270px;
   height: auto;
   border-radius: 18px;
   box-shadow: 0 20px 28px -10px var(--shadow);
@@ -477,6 +477,14 @@
 .project-detail-content p { margin: 0 0 24px; font-size: 16px; line-height: 1.9; color: var(--muted); white-space: pre-line; }
 .project-detail-content figure { margin: 52px 0; }
 .project-detail-content figure img { width: 100%; height: auto; border-radius: 18px; }
+.zoom-image { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; }
+/* Inset ring: the gallery frame clips anything drawn outside the button. */
+.zoom-image:focus-visible { outline-offset: -4px; }
+.image-lightbox { width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 24px; border: 0; background: transparent; cursor: zoom-out; }
+.image-lightbox[open] { display: grid; place-items: center; }
+.image-lightbox::backdrop { background: rgb(8 10 12 / 92%); }
+.image-lightbox .lightbox-image { width: auto; height: auto; max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 12px; }
+.image-lightbox .lightbox-close { position: fixed; top: 20px; right: 20px; color: #fff; background: rgb(255 255 255 / 14%); border-radius: 999px; }
 .project-detail-content .placeholder-note { font-size: 12px; }
 .project-detail-page > .project-actions { max-width: 780px; margin: 45px auto 0; flex-wrap: wrap; }
 .turnstile-widget { min-height: 65px; }

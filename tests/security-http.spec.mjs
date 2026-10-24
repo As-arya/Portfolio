@@ -71,7 +71,6 @@ test("CSP allows the UI and challenge but blocks injected inline script", async 
   }));
   await page.goto(baseURL);
   await expect(page.locator("#about")).toBeVisible();
-  await expect(page.locator(".gradient-waves canvas")).toHaveCount(1);
   await page.locator("#contact").scrollIntoViewIfNeeded();
   await expect.poll(() => page.evaluate(() => window.challengeAction)).toBe("contact");
   expect(await page.evaluate(() => window.cspViolations)).toEqual([]);

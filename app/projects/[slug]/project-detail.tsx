@@ -1,12 +1,30 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
-import { IconArrowLeft, IconArrowRight, IconArrowUpRight, IconBrandGithub, IconBrandGooglePlay, IconPhoto, IconPlayerPlay } from "@tabler/icons-react";
+import { IconArrowLeft, IconArrowRight, IconArrowUpRight, IconBrandGithub, IconBrandGooglePlay, IconPhoto, IconPlayerPlay, IconX } from "@tabler/icons-react";
 import { useCopy } from "../../preferences";
 import { Header } from "../../sections";
 import type { Media, ProjectRecord } from "../../../lib/models";
 import StackTags from "../../project-stack";
+
+function ZoomImage({ src, alt, loading }: { src: string; alt: string; loading?: "eager" | "lazy" }) {
+  const { t } = useCopy();
+  const dialog = useRef<HTMLDialogElement>(null);
+  return <>
+    <button type="button" className="zoom-image" onClick={() => dialog.current?.showModal()} aria-label={`${t("Lihat layar penuh", "View full screen")}: ${alt}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} loading={loading} />
+    </button>
+    {/* React bubbles cancel/keydown up its tree: keep Esc and arrows away from the project dialog and gallery. */}
+    <dialog ref={dialog} className="image-lightbox" aria-label={alt} onClick={() => dialog.current?.close()}
+      onCancel={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img className="lightbox-image" src={src} alt={alt} />
+      <button type="button" autoFocus className="icon-button lightbox-close" aria-label={t("Tutup", "Close")}><IconX size={22} /></button>
+    </dialog>
+  </>;
+}
 
 export function ProjectGallery({ project }: { project: ProjectRecord }) {
   const { lang, t } = useCopy();
@@ -31,9 +49,11 @@ export function ProjectGallery({ project }: { project: ProjectRecord }) {
         {Array.from({ length: Math.min(3, images.length) }, (_, layer) => {
           const media = images[(active + layer) % images.length];
           return (
-            <div key={`${active}-${layer}`} className={`stacked-photo layer-${layer}`} aria-hidden={layer > 0}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={media.url} alt={layer === 0 ? alt(media) : ""} loading={layer === 0 ? "eager" : "lazy"} />
+            <div key={layer} className={`stacked-photo layer-${layer}`} aria-hidden={layer > 0}>
+              {layer === 0 ? <ZoomImage src={media.url} alt={alt(media)} loading="eager" /> : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={media.url} alt="" loading="lazy" />
+              )}
             </div>
           );
         })}
@@ -57,8 +77,7 @@ export function ProjectBlocks({ project }: { project: ProjectRecord }) {
       if (block.type === "heading") return <h2 key={block.id}>{block.text}</h2>;
       if (block.type === "paragraph") return <p key={block.id}>{block.text}</p>;
       if (block.type === "image" && block.image) return <figure key={block.id}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={block.image.url} alt={(lang === "id" ? block.image.altId : block.image.altEn) || copy.title} loading="lazy" />
+        <ZoomImage src={block.image.url} alt={(lang === "id" ? block.image.altId : block.image.altEn) || copy.title} loading="lazy" />
       </figure>;
       return null;
     }) : <p>{copy.summary}</p>}

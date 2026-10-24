@@ -161,6 +161,7 @@ interface Applied {
   faceKey?: string;
   strapColor?: string;
   strapScale?: number;
+  intro?: boolean;
 }
 
 interface Press {
@@ -1228,8 +1229,13 @@ const Lanyard = ({
         clampMesh.geometry = buildClampGeometry(strapScale);
       }
       canvas.style.touchAction = s.interactive ? 'pan-y' : 'auto';
+      // The site intro turns `intro` on once its loader lifts, so the fall plays in view rather than behind it.
+      if (s.intro && applied.intro === false && !reducedMotion) {
+        if (presentationReady) playIntro();
+        else introPending = true;
+      }
 
-      applied = { layoutKey, framingKey, imageKey, faceKey, strapColor: s.strapColor, strapScale };
+      applied = { layoutKey, framingKey, imageKey, faceKey, strapColor: s.strapColor, strapScale, intro: s.intro };
       start();
     };
 

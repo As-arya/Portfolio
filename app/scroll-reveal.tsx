@@ -1,17 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { IntroContext } from "./intro";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function ScrollReveal({ text }: { text: string }) {
   const ref = useRef<HTMLParagraphElement>(null);
+  const { revealed } = useContext(IntroContext);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el || !revealed || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const words = el.querySelectorAll(".scroll-reveal-word");
     const context = gsap.context(() => {
       gsap.fromTo(words, { opacity: 0.15 }, {
@@ -23,7 +25,7 @@ export default function ScrollReveal({ text }: { text: string }) {
       });
     }, el);
     return () => context.revert();
-  }, [text]);
+  }, [text, revealed]);
 
   return (
     <p ref={ref} className="body-copy scroll-reveal">

@@ -12,6 +12,7 @@ test("lanyard can be pulled below its frame and returns safely", async ({ page }
   const stage = page.locator(".lanyard-stage");
   await stage.scrollIntoViewIfNeeded();
   await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
   await page.waitForTimeout(1400);
   const box = await stage.boundingBox();
   const x = box.x + box.width / 2;
@@ -58,6 +59,7 @@ test("drag inside the frame stretches the band and returns", async ({ page }) =>
   const stage = page.locator(".lanyard-stage");
   await stage.scrollIntoViewIfNeeded();
   await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
   await page.waitForTimeout(1400);
   const box = await stage.boundingBox();
   const x = box.x + box.width / 2;
@@ -106,12 +108,14 @@ test("mobile layout fits and returning to About preserves the card", async ({ pa
   const scene = page.locator(".lanyard-scene");
   await page.locator(".lanyard-stage").scrollIntoViewIfNeeded();
   await expect(scene).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
   const canvas = await scene.locator("canvas").elementHandle();
   await page.locator(".lanyard-stage").press("Enter");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
   await page.locator(".lanyard-stage").scrollIntoViewIfNeeded();
   await expect(scene).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
   await expect(scene.locator("canvas")).toHaveCount(1);
   expect(await canvas.evaluate(element => element.isConnected)).toBe(true);
   await expect(page.locator(".lanyard-stage")).toHaveAttribute("aria-pressed", "true");
@@ -123,6 +127,7 @@ test("flip shows the back within a second", async ({ page }) => {
   const stage = page.locator(".lanyard-stage");
   await stage.scrollIntoViewIfNeeded();
   await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
   await page.waitForTimeout(1400);
   const box = await stage.boundingBox();
   await page.mouse.click(box.x + box.width / 2, box.y + box.height * 0.5);
@@ -142,6 +147,7 @@ test("strap lettering keeps its proportions without visible controls", async ({ 
   const stage = page.locator(".lanyard-stage");
   await stage.scrollIntoViewIfNeeded();
   await expect(page.locator(".lanyard-scene")).toHaveAttribute("data-ready", "true");
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
   await expect(page.locator(".lanyard-controls")).toHaveCount(0);
   await page.waitForTimeout(1400);
   const screenshot = await stage.screenshot({ path: testInfo.outputPath("lanyard-preview.png") });

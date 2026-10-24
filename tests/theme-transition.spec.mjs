@@ -8,6 +8,8 @@ test("theme expands from its button and respects reduced motion", async ({ page 
     localStorage.setItem("portfolio-language", "id");
   });
   await page.goto("http://127.0.0.1:3000");
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
+  await page.locator(".nav-wrap").evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
   const button = page.getByRole("button", { name: "Ganti tema" });
   const bounds = await button.boundingBox();
   expect(bounds).not.toBeNull();

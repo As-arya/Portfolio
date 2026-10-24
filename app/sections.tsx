@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import { useContext, useEffect, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { flushSync } from "react-dom";
 import dynamic from "next/dynamic";
 import Script from "next/script";
@@ -25,6 +25,7 @@ import { profile } from "./data";
 import { activeSection } from "./navigation";
 import ScrollReveal from "./scroll-reveal";
 import Lanyard from "./lanyard";
+import { IntroContext } from "./intro";
 const PixelBlast = dynamic(() => import("./pixel-blast"), { ssr: false });
 
 type Turnstile = {
@@ -164,7 +165,7 @@ export function Header({ homeLinks = false }: { homeLinks?: boolean }) {
         className="navbar"
         aria-label="Main navigation"
       >
-        <GlassSurface className="glass-layer" width="100%" height="100%" borderRadius={999} backgroundOpacity={0.55} saturation={1.15} distortionScale={-28} greenOffset={2} blueOffset={4} />
+        <GlassSurface className="glass-layer" width="100%" height="100%" borderRadius={999} distortionScale={-180} displace={0.5} backgroundOpacity={0.1} />
         <a
           href={homeLinks ? "/#about" : "#about"}
           className="wordmark"
@@ -310,10 +311,11 @@ export function About({ availability }: { availability: "open_to_work" | "hired"
   const nameRef = useRef<HTMLHeadingElement>(null);
   const nameInView = useInView(nameRef, { once: true, amount: 0.1 });
   const reduced = useReducedMotion();
+  const { revealed } = useContext(IntroContext);
   const name = profile.name.replace(" ", "\n");
   const [typedName, setTypedName] = useState("");
   useEffect(() => {
-    if (!nameInView || reduced) {
+    if (!nameInView || !revealed || reduced) {
       setTypedName(reduced ? name : "");
       return;
     }
@@ -324,7 +326,7 @@ export function About({ availability }: { availability: "open_to_work" | "hired"
       if (index === name.length) window.clearInterval(timer);
     }, 65);
     return () => window.clearInterval(timer);
-  }, [nameInView, reduced]);
+  }, [nameInView, revealed, reduced]);
   return (
     <section id="about" className="about section container" aria-labelledby="about-title">
       <div className="about-copy">

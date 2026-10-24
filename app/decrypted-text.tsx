@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import "./decrypted-text.css";
 
 const glyphs = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#@$";
 

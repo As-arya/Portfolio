@@ -1,0 +1,38 @@
+.portfolio-home { position: relative; isolation: isolate; }
+/* Keep the scrollbar's space while scrolling is locked, so the page does not jump when the loader goes. */
+html:has(.site-loader) { overflow: hidden; scrollbar-gutter: stable; }
+.site-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-content: center;
+  background: var(--bg);
+  color: var(--text);
+  clip-path: inset(0 0 0 0);
+}
+.site-loader-title {
+  position: relative;
+  font-size: clamp(34px, 5.5vw, 64px);
+  font-weight: 550;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
+}
+/* The final word sizes the box, so the shuffling letters never shift its position. */
+.site-loader-measure { visibility: hidden; }
+.site-loader-scramble { position: absolute; inset: 0; text-align: center; }
+
+/* Entrance while the loader lifts. Hidden until then so nothing plays behind it.
+   The lanyard waits for the curtain to clear; its own fall is the entrance. */
+.portfolio-home[data-entered="false"] :is(.nav-wrap, .about-copy) { opacity: 0; }
+.portfolio-home[data-revealed="false"] .lanyard-area { opacity: 0; }
+.portfolio-home[data-entered="true"] .about-copy { animation: enter-up .9s .6s cubic-bezier(.2, .7, .2, 1) backwards; }
+/* Transform only: opacity on an ancestor would blank the navbar's backdrop-filter glass. */
+.portfolio-home[data-entered="true"] .nav-wrap { animation: enter-down .9s .9s cubic-bezier(.2, .7, .2, 1) backwards; }
+@keyframes enter-up { from { opacity: 0; transform: translateY(32px); } }
+@keyframes enter-down { from { transform: translateY(-160px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .portfolio-home :is(.nav-wrap, .about-copy) { animation: none !important; }
+}

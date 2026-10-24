@@ -65,6 +65,7 @@ test("responsive navigation, activity, and project reveal stay usable", async ({
   await expect(page.getByText("Proyek lainnya sedang disiapkan.")).toBeHidden();
   await page.setViewportSize({ width: 1532, height: 900 });
   await page.reload();
+  await expect(page.locator(".portfolio-home")).toHaveAttribute("data-revealed", "true");
   await expect(page.locator(".github-activity-grid span[title]")).toHaveCount(365);
   expect(await page.locator(".github-activity-grid span").first().evaluate((element) => element.getBoundingClientRect().width)).toBeGreaterThanOrEqual(23);
   const desktopRange = await calendar.evaluate((element) => ({ left: element.scrollLeft, max: element.scrollWidth - element.clientWidth }));
